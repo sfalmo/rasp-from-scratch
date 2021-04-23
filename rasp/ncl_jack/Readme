@@ -1,0 +1,28 @@
+Files are marked as:
+
+nocuda - version that is not using cuda
+avx - compiled for Intel AVX capable processors (newest corei7 and Xeon) ,
+ 	will crash otherwise with "Illegal Instruction".
+sse2 - optimized for sse2, it means - for all
+
+
+So, you need one from both, ncl_jack and wrf_user, on your linking path
+  LD_LIBRARY_PATH is variable to add a directory to
+
+
+
+Setup for Nvidia:
+ It has been long time when I used it last with NCL, so if any problems, write me elmer@fcst24.com
+
+Setup for ncl downloaded from NCAR:
+  you would probably need to make a stub library that would link proper
+  system library in.
+   gcc -shared -o libstub.so libncl_jack.??.so libwrf_user.??.so -lgfortran -lmvec -lomp
+ and then load libstub.so instead on libncl_jack.so
+
+
+it requires vectorization code from glibc, so generally it starts around gcc-8 and glibc 2.22,
+ it is quite a pain to install in earlier versions. For debian-ubuntu you can install 
+new gcc in parallel and then link with libmvec or whatever provides vectorized math there.
+
+

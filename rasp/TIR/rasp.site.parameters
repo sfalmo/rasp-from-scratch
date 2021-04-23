@@ -1,0 +1,36 @@
+############################################################################
+###############  THIS FILE READ AFTER NORMAL PARAMETERS SET  ############### 
+###############         SO CAN BE USED TO ALTER THEM         ############### 
+###############            (utilizes perl coding)            ############### 
+############################################################################
+
+############  SITE-SPECIFIC PARAMETERS FOLLOW  ################## 
+
+### EMAIL ADDRESS where fatal error messages are sent (when std.err file not empty)
+### also used for anonymous ftp login password so CANNOT BE BLANK!
+$ADMIN_EMAIL_ADDRESS = 'info@aufwin.de';
+$USERNAME = 'root';
+
+### ERROR MESSAGES TO BE REPORTED TO ADMIN VIA EMAIL
+### activate any errors you wish to be advised of via email
+### * REPORT FAILIURE OF WRF FORECAST PROGRAM wrf.exe 
+$ADMIN_EMAIL{'WRF_EXECUTION'} = 1 ;
+### * REPORT TIMEOUT FAILIURE OF NCL PLOTTING PROGRAM
+$ADMIN_EMAIL{'NCL_TIMEOUT'} = 1 ;
+### * REPORT FAILIURE TO FIND EXPECTED FINAL IMAGE FILE AT JOB END
+$ADMIN_EMAIL{'JOBEND_IMAGE'} = 1 ;
+
+# If you need a proxy for curl, add here
+# $PROXY = "--proxy http://host.domain:port_num";
+
+### ALTER NUMBER OF CPUS from default=2 (which is also ok for 1 cpu)
+# $NCPUS = 2;
+
+#################################################################
+######  PUT LOCAL SITE PARAMETERS CHANGES BELOW THIS LINE  ######
+#################################################################
+
+#################################################################
+######        ADDITIONS MUST BE MADE ABOVE THIS LINE       ######
+#################################################################
+1.;

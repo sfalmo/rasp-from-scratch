@@ -1,0 +1,10 @@
+# This file cannot contain blank lines! (unless they are prepended with a hash sign)
+1,Tirschenreuth,d2,12.3272,49.8741,
+2,Oberhinkofen,d2,12.1462,48.9523,
+3,Bamberg,d2,10.9121,49.9179,
+4,Jena,d2,11.7171,50.9164,
+5,Noerdlingen,d2,10.5034,48.8703,
+6,Grossrueckerswalde,d2,13.1274,50.6431,
+7,Klatovy,d2,13.3215,49.4172,
+8,Wasserkuppe,d2,9.9541,50.4989,
+9,Sonnen,d2,13.6949,48.6823,

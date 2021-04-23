@@ -1,0 +1,131 @@
+#! /bin/bash
+if [ $# = 0  -o  "$1" = "-h" -o "$1" = "-?" ]
+then
+#------------------------adescription-----------------------------------------
+echo 'Convert $1=Julian_date <$2=2/4#year,default=current)> into date mm/dd/yy'
+echo '  Y2K/leapyear compliant - only valid 2000-2099'
+echo '  allows $1=0 & $1=365/6+(1-31) to handle yesterday&tomorrow+ cases'
+exit 1
+fi
+### v prints input lines, x prints expanded command 
+#4test set -vx
+###################################################################
+
+### test input date - allow 0 input
+### strip any extra (more than one) leading zeros from jdate and year
+jdate=`echo "$1" | sed 's/^0*//'`
+year=`echo "$2" | sed 's/^0*//'`
+if [ "$jdate" = "" ]
+then jdate=0
+fi
+if [ "$year" = "" ]
+then year=`date +%Y`
+#old then year=0
+fi
+#4test: echo "JDATE,YEAR = $jdate & $year "
+
+#4test: echo "ARGS= $jdate & $year"
+### determine year
+if [ "$year" = "" ]
+then
+  yyyy=`date +%Y`
+else
+  if [ $year -lt 100 ]
+  #old-1940-2039 if [ $year -lt 40 ]
+  then
+    (( yyyy = $year + 2000 ))
+  #old-1940-2039 elif [ $year -lt 100 ]
+  #old-1940-2039 then
+  #old-1940-2039   (( yyyy = $year + 1900 ))
+  #old-1940-2039 elif [ $year -gt 1970 -a $year -lt 2040 ]
+  elif [ $year -ge 2000 -a $year -le 2099 ]
+  then
+    yyyy=$year
+  else
+    echo "jdate2date ERROR EXIT: bad argument2 = $year"
+    exit 2
+  fi
+fi
+### must allow for curr+4 day case
+if [ $jdate -lt 0 -o $jdate -gt 397 ]
+#old if [ $jdate -lt 0 -o $jdate -gt 368 ]
+then
+  echo "jdate2date ERROR EXIT: bad arg1= $jdate"
+  exit 2
+elif [ $jdate -eq 0 ]
+then
+(( yyyy = $yyyy - 1 ))
+fi
+yy=`echo $yyyy | cut -c3-4`
+
+### determine whether leap-year
+### compute days in february
+if [ `expr $yyyy % 4` -ne 0 ]
+then
+  daypermon[2]='28'
+elif [ `expr $yyyy % 400` -ne 0 ]
+then
+  daypermon[2]='29'
+elif [ `expr $yyyy % 100` -ne 0 ]
+then
+  daypermon[2]='28'
+else
+  daypermon[2]='29'
+fi
+#allow_tomorrows_jdate if [ "$jdate" = "366" -a "${daypermon[2]}" != "29" ]
+#allow_tomorrows_jdate then
+#allow_tomorrows_jdate#   echo "jdate2date ERROR EXIT: $year is not a leap year"
+#allow_tomorrows_jdate#   exit 2
+#allow_tomorrows_jdate# fi
+if [ "$jdate" = "0" -a "${daypermon[2]}" = "28" ]
+then
+  jdate=365
+elif [ "$jdate" = "0" -a "${daypermon[2]}" = "29" ]
+then
+  jdate=366
+fi
+daypermon[1]='31'
+daypermon[3]='31'
+daypermon[4]='30'
+daypermon[5]='31'
+daypermon[6]='30'
+daypermon[7]='31'
+daypermon[8]='31'
+daypermon[9]='30'
+daypermon[10]='31'
+daypermon[11]='30'
+daypermon[12]='31'
+daypermon[13]='0'
+
+iday=$jdate
+for imon in 1 2 3 4 5 6 7 8 9 10 11 12 13
+do
+  if [ $iday -le ${daypermon[$imon]} ]
+  then break
+  fi
+  (( iday = $iday - ${daypermon[$imon]} ))
+done
+if [ $imon -eq 13 -a $iday -gt 31 ]
+then echo "ERROR - bad imon"
+     exit 2
+elif [ $imon -eq 13 -a $iday -le 31 ]
+then
+### convert into next year
+   imon=1
+   #old   iday=1
+   (( yyyy = $yyyy + 1 ))
+   yy=`echo $yyyy | cut -c3-4`
+fi
+
+### convert 1 digit day/month into two digits
+if [ "`echo $imon | cut -c2`" = "" ]
+then imon="0${imon}"
+fi
+if [ "`echo $iday | cut -c2`" = "" ]
+then iday="0${iday}"
+fi
+echo "${imon}/${iday}/${yy}"
+
+
+
+

@@ -1,0 +1,176 @@
+#! /bin/bash
+### above needed to allow env.parameter using rasp.site.runenvironment ??
+
+if [ $# -eq 0 -o "$1" = "-?" ]
+then
+#-----------------adescription1------------------------------------
+echo 'Run normal daily GM.pl job for domainarg <-z> $SITE <$*>'
+echo 'optional -z includes 1hr sleep IF DaylightTime'
+echo 'optional $* defaults to "-M 0" if not specified'
+echo '(expect to run from cron - so sans normal profile & print only errors)'
+echo '(if NOT run from cron, use nohup and &)'
+echo '(*NB* MUST BE CALLED EITHER WITH NO PATH FROM RUN DIRECTORY OR WITH FULL PATH NAME !!!)'
+exit
+fi
+##################################################################
+#4no_undefined: treat unset variable as an error when substituting: set -u
+#4no_file_glob: disable filename generation: set -f
+#4exit_on_error: exit if command has non-zero exit status: set -e
+#4test: set -vx
+##################################################################
+
+#################################################################################
+##########  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  ###########
+##########  *NB* EDITING MAY CAUSE PROBLEMS IN EXISTING RUNNING JOBS  ###########
+##########  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  ###########
+#################################################################################
+
+### SET FLAG TO SEND EMAIL IF STDERR NOT EMPTY
+LSENDSTDERREMAIL=0
+
+########################################
+
+if [ x$BASEDIR = x ]
+then
+   echo "runGM ERROR: BASEDIR not set"
+   echo "[BASEDIR is directory containing REGION directory]"
+   exit 1
+else
+   cd $BASEDIR
+fi
+
+# Add to PATH (needed if running from crontab)
+export PATH+=:$BASEDIR/bin
+
+if [ $1 = "-z" ] # Check for -z
+then
+    DSTdelay=1
+    shift
+fi
+
+if [ $# = 0 ]
+then
+    echo "ERROR: No Region specified"
+    exit 1
+fi
+
+
+SITEARG=`echo $1 | tr '[a-z]' '[A-Z]'`
+sitearg=`echo $1 | tr '[A-Z]' '[a-z]'`
+if [ ! -d $SITEARG ]
+then
+    echo "runGM ERROR: $SITEARG directory does not exist"
+    exit 1
+else
+    cd $SITEARG
+    shift
+    if [ $# -eq 0 ]
+    then
+      arglist='-M 0'
+    else
+      arglist=$*
+    fi
+fi
+
+# If -z Argument was specified, Delay 1hr if daylight savings time (so crontab time can always be local time)
+if [ $DSTdelay ]
+then
+    DAYLIGHTSAVING=`perl -e '@TIME=localtime(time); print "$TIME[8]";'`
+    if [ $DAYLIGHTSAVING -gt 0 ]
+    then sleep 3600
+    fi
+fi
+
+
+### USER-SPECIFIC PARAMETER 
+### SET LOCAL EMAIL ADDRESS for error messages (blank sends no messages)
+### now extract admin email address from rasp.site.parameters - allow both ' and " delimiter in rasp.site.parameters assignment
+ADMIN_EMAIL_ADDRESS=`sed -n "/^ *\\\$ADMIN_EMAIL_ADDRESS/s/^.*= *['\"]\([^'\"]*\)['\"].*$/\1/p" rasp.site.parameters`
+
+
+### TEST FOR RUN SCRIPT
+MASTER=`which GM-master.pl 2>/dev/null`
+if [ x`echo -n $MASTER` = x ]
+then
+  echo "***ERROR EXIT: GM-master.pl not found"
+  exit 1
+fi
+
+# Check for all required programs
+for i in \
+    basename cat chmod cp curl cut date echo find \
+    grep gzip jdate2date kill link_grib.csh  \
+    ls mail metgrid.exe mkdir mv ncl ps pstree real.exe \
+    rm ncdump sed sort stat tail tr ungrib.exe wrf.exe 
+    # The following also appear in the script but are not used:
+    # ftp 
+    # plt_chars.pl
+    # no_blipspot_available.pl
+    # no_blipmap_available.pl
+    # blipmap.cp2previousday 
+do
+   out=`which $i 2> /dev/null | wc -l` 
+   if [ $out = 0 ];then
+       echo ERROR: No $i found; Cannot run!
+       exit 1
+   fi
+   out=`which gm 2> /dev/null | wc -l`
+   if [ $out = 0 ]
+   then
+       out=`which convert | wc -l`
+       if [ $out = 0 ]
+       then
+           echo ERROR: Neither gm nor convert found
+           exit 1
+       else
+         export CONVERT=convert
+       fi
+   else
+       export CONVERT="gm convert"
+   fi
+done
+
+
+
+
+### SAVE OLD FILES, CREATE SITE-SPECIFIC EXECUTABLE 
+### if GM.pl has changed, save old version results to help debug any errors added to new version
+if [ ! -s GM.pl ]
+then
+  cp $MASTER GM.pl
+else
+  cmp -s $MASTER GM.pl
+  if [ $? -ne 0 ]
+  then
+    if [ -s previous.GM.pl ]
+    then
+      mv previous.GM.pl old.GM.pl
+    fi
+    mv GM.pl previous.GM.pl
+    cp $MASTER GM.pl
+  fi
+fi
+
+### save files from previous job
+mv -uf LOG/previous.GM.printout LOG/old.GM.printout      2>/dev/null
+mv -uf LOG/GM.printout          LOG/previous.GM.printout 2>/dev/null
+mv -uf LOG/previous.GM.stdout   LOG/old.GM.stdout        2>/dev/null
+mv -uf LOG/GM.stdout            LOG/previous.GM.stdout   2>/dev/null
+mv -uf LOG/previous.GM.stderr   LOG/old.GM.stderr        2>/dev/null
+mv -uf LOG/GM.stderr            LOG/previous.GM.stderr   2>/dev/null
+
+### SET OPTIONAL ENVIRONMENTAL PARAMETERS
+if [ -f ./rasp.site.runenvironment ]
+then
+  source ./rasp.site.runenvironment
+fi 
+
+### RUN JOB
+./GM.pl $SITEARG $arglist >| LOG/GM.stdout 2>| LOG/GM.stderr
+
+### SEND EMAIL IF stderr not empty
+if [ -s LOG/GM.stderr -a $LSENDSTDERREMAIL -eq 1 -a "$ADMIN_EMAIL_ADDRESS" != "" -a "$ADMIN_EMAIL_ADDRESS" != " " ]
+then
+  tail LOG/GM.stderr | mail -s "WRITES in $SITEARG/LOG/GM.stderr" $ADMIN_EMAIL_ADDRESS
+fi
+

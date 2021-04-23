@@ -1,0 +1,11 @@
+services:
+  tir:
+    image: eu.gcr.io/aufwinde/rasp:0.1
+    build: .
+    volumes:
+      - ../results/OUT:/root/rasp/TIR/OUT
+      - ../results/LOG:/root/rasp/TIR/LOG
+    environment:
+      - START_DAY=${START_DAY:-0}
+      - OFFSET_HOUR=${OFFSET_HOUR:-0}
+    command: ["runRasp.sh", "TIR"]

@@ -1,0 +1,36 @@
+--- WRFUserARW.ncl_original	2020-08-14 15:58:18.000000000 +0200
++++ WRFUserARW.ncl_modified	2021-04-22 21:40:59.000000000 +0200
+@@ -2183,33 +2183,6 @@ end
+ 
+ ;--------------------------------------------------------------------------------
+ 
+-undef("wrf_user_latlon_to_ij")
+-function wrf_user_latlon_to_ij( nc_file:file, latitude:numeric, \
+-                                longitude:numeric )
+-
+-begin
+-  WE       = "WEST-EAST_GRID_DIMENSION"
+-  SN       = "SOUTH-NORTH_GRID_DIMENSION"
+-  wedim    = nc_file@$WE$
+-  sndim    = nc_file@$SN$
+-
+-  if(isfilevar(nc_file,"XLAT"))
+-    XLAT  = nc_file->XLAT(0,:,:)
+-    XLONG = nc_file->XLONG(0,:,:)
+-  else
+-    XLAT  = nc_file->XLAT_M(0,:,:)
+-    XLONG = nc_file->XLONG_M(0,:,:)
+-  end if
+-
+-  loc = wrf_latlon_to_ij( XLAT, XLONG, latitude, longitude )
+-
+-  loc!0 = "j & i locations"
+-  return(loc)
+-
+-end
+-
+-;--------------------------------------------------------------------------------
+-
+ undef("wrf_user_ll_to_ij")
+ function wrf_user_ll_to_ij( file_handle, longitude:numeric, latitude:numeric, \
+                             opts_args:logical )
