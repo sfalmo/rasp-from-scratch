@@ -12,8 +12,7 @@ Adapt the image tags in the Dockerfiles to your needs.
 ### Build base image
 
 ```shell
-$ cd base
-$ docker build -t <base tag> .
+$ docker build -t <base tag> base
 ```
 
 This image is based on Fedora Linux and adds common utilities and libraries.
@@ -21,19 +20,18 @@ This image is based on Fedora Linux and adds common utilities and libraries.
 ### Build WRF
 
 **Change `wrf/configure.wrf.patch` so that the binaries will be compatible with your CPU type!**
-You do this by specifying appropriate `-march` and `-mtune` compiler flags, e.g. if you intend to run WRF on Intel Haswell architectures, set `-march=haswell -mtune=haswell` (cf. GNU compiler manual for available options).
+You do this by specifying appropriate `-march` and `-mtune` compiler flags, e.g. if you intend to run WRF on Intel Haswell architectures, set `-march=haswell -mtune=haswell` (cf. GNU compiler manual for available options). If you run WRF on the same machine you use for compilation, set `-march=native -mtune=native`.
 
 ```shell
-$ cd wrf
-$ docker build -t <wrf tag> .
+$ docker build -t <wrf tag> wrf
 ```
 
 WRF and WPS are fetched from GitHub and compiled from source.
 This can take a long time, so be patient and do not worry about the verbose output!
 WRF will be compiled with GNU compilers in smpar (i.e. OpenMP) mode (compilation option 33) and with basic nesting support (nesting option 1).
 
-We use the bare minimum of DrJack's patches to change WRF's registry, so that certain variables are output which are needed in the RASP plot scripts.
-Note however, that the custom cloud calculation patches are not applied and thus, `wrf=CFRAC[L|M|H]` are not available (or wrong)!
+We use the bare minimum of DrJack's patches to change WRF's registry, so that certain variables which are needed for the RASP plot routines appear in `wrfout` files.
+Note however, that DrJack's cloud calculation patches are not applied and thus, `wrf=CFRAC[L|M|H]` are not available (or wrong)!
 
 ### Build RASP
 
@@ -41,8 +39,7 @@ Note however, that the custom cloud calculation patches are not applied and thus
 Go to [UCAR's page](https://www2.mmm.ucar.edu/wrf/users/download/get_sources_wps_geog.html) and download the appropriate bundle.
 
 ```shell
-$ cd rasp
-$ docker build -t <rasp tag> .
+$ docker build -t <rasp tag> rasp
 ```
 
 This sets up the directory structure for RASP runs, copies all the run and plotting scripts, copies the necessary binaries and run tables from the WRF image, sets up the RASP region and runs `geogrid.exe` on it.
@@ -65,11 +62,10 @@ Note that you can provide any custom tables that WRF/WPS recognizes in your regi
 
 ## Run 
 
-In the base directory:
-
 ```shell
 $ docker-compose run
 ```
 
-If you want to start this process in the background, append `-d`.
-For an interactive container, append `/bin/bash`. When the container is running, execute `runRasp.sh <region> &` to start the RASP run for your `<region>`.
+Append `-d` to make this a background process.
+If you want an interactive shell to your container (e.g. for testing), append `/bin/bash`.
+When the container is running, execute the entry script `runRasp.sh <region>` to start the RASP run for your `<region>` manually.
