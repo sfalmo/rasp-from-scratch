@@ -14,12 +14,12 @@
  PROMOTION       =       #-fdefault-real-8
  ARCH_LOCAL      =       -DNONSTANDARD_SYSTEM_SUBR  -DWRF_USE_CLM
 -CFLAGS_LOCAL    =       -w -O3 -c  # -DRSL0_ONLY
-+CFLAGS_LOCAL    =       -w -O3 -c -march=native -mtune=native  # -DRSL0_ONLY
++CFLAGS_LOCAL    =       -w -O3 -c -march=haswell -mtune=generic  # -DRSL0_ONLY
  LDFLAGS_LOCAL   =       
  CPLUSPLUSLIB    =       
  ESMF_LDFLAG     =       $(CPLUSPLUSLIB)
 -FCOPTIM         =       -O2 -ftree-vectorize -funroll-loops
-+FCOPTIM         =       -O3 -ftree-vectorize -funroll-loops -march=native -mtune=native
++FCOPTIM         =       -O3 -ftree-vectorize -funroll-loops -march=haswell -mtune=generic
  FCREDUCEDOPT	=       $(FCOPTIM)
  FCNOOPT		=       -O0
  FCDEBUG         =       # -g $(FCNOOPT) # -ggdb -fbacktrace -fcheck=bounds,do,mem,pointer -ffpe-trap=invalid,zero,overflow

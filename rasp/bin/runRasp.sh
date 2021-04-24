@@ -13,6 +13,8 @@ if [ -z "${START_DAY}" ] ; then
 fi
 
 regionDir="/root/rasp/${region}"
+outDir="${regionDir}/OUT"
+logDir="${regionDir}/LOG"
 
 . ${regionDir}/rasp.site.runenvironment
 
@@ -32,16 +34,14 @@ runGM ${region}
 #Generate the meteogram images
 echo "Running meteogram on $(date)"
 cp /root/rasp/logo.svg ${region}/OUT/logo.svg
-ncl /root/rasp/GM/meteogram.ncl DOMAIN=\"${region}\" SITEDATA=\"/root/rasp/GM/sitedata.ncl\"
+ncl /root/rasp/GM/meteogram.ncl DOMAIN=\"${region}\" SITEDATA=\"/root/rasp/GM/sitedata.ncl\" &> ${logDir}/meteogram.out
 
 # Generate title JSONs from data files
-perl /root/rasp/bin/title2json.pl /root/rasp/${region}/OUT
+perl /root/rasp/bin/title2json.pl /root/rasp/${region}/OUT &> ${logDir}/title2json.out
 
 # Generate geotiffs from data files
-python3 /root/rasp/bin/rasp2geotiff.py /root/rasp/${region}
+python3 /root/rasp/bin/rasp2geotiff.py /root/rasp/${region} &> ${logDir}/rasp2geotiff.out
 
-outDir="${regionDir}/OUT"
-logDir="${regionDir}/LOG"
 runSubdir="${region}"
 if [[ "$START_DAY" != "0" ]]
 then
