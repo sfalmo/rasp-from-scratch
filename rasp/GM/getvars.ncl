@@ -39,7 +39,8 @@ uEW      = uv(0,:,:,:)                           ; u,v rotated to grid   in m/s
 vNS      = uv(1,:,:,:)                           ; u,v rotated to grid   in m/s
 slvl     = wrf_user_getvar(f, "slp", time)       ; Sea Level Pressure
 pmb      = wrf_user_getvar(f, "pressure", time)  ; press is vertical coordinate in mb
-z        = wrf_user_getvar(f,"z", time)
+z        = wrf_user_getvar(f, "z", time)
+cfrac    = wrf_user_getvar(f, "cfrac", time)
 
 paramdims= dimsizes(z)                                ; Get Dimensions
 nz       = paramdims(0)

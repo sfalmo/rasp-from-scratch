@@ -2552,6 +2552,54 @@ begin
 			continue
 		end if
 
+; CFRACL
+		if( params(p) .eq. "cfracl" ) then
+			opts_bparam@ContourParameters = (/ 5., 95., 5. /)
+			opts_bparam@MainTitle = "Cloud Fraction - Low"
+			opts_bparam@unitString = "%"
+			qparaminfo = "Param= "+params(p)+" Unit= % Mult= 1"
+
+			cfracl = cfrac(0,:,:) * 100
+			ldatafmt = plot_contour(wks, bg, cfracl, params(p), tail, alat, alon, gridspacingkm, opts_cn, opts_bparam, opts_bg, ldatafmt)
+			bparam = cfracl
+			copy_VarAtts(atts, bparam)
+			write_datafile(params(p), bparam, opts_bparam, ldatafmt)
+
+			continue
+		end if
+
+; CFRACM
+		if( params(p) .eq. "cfracm" ) then
+			opts_bparam@ContourParameters = (/ 5., 95., 5. /)
+			opts_bparam@MainTitle = "Cloud Fraction - Mid"
+			opts_bparam@unitString = "%"
+			qparaminfo = "Param= "+params(p)+" Unit= % Mult= 1"
+
+			cfracm = cfrac(1,:,:) * 100
+			ldatafmt = plot_contour(wks, bg, cfracm, params(p), tail, alat, alon, gridspacingkm, opts_cn, opts_bparam, opts_bg, ldatafmt)
+			bparam = cfracm
+			copy_VarAtts(atts, bparam)
+			write_datafile(params(p), bparam, opts_bparam, ldatafmt)
+
+			continue
+		end if
+
+; CFRACH
+		if( params(p) .eq. "cfrach" ) then
+			opts_bparam@ContourParameters = (/ 5., 95., 5. /)
+			opts_bparam@MainTitle = "Cloud Fraction - High"
+			opts_bparam@unitString = "%"
+			qparaminfo = "Param= "+params(p)+" Unit= % Mult= 1"
+
+			cfrach = cfrac(2,:,:) * 100
+			ldatafmt = plot_contour(wks, bg, cfrach, params(p), tail, alat, alon, gridspacingkm, opts_cn, opts_bparam, opts_bg, ldatafmt)
+			bparam = cfrach
+			copy_VarAtts(atts, bparam)
+			write_datafile(params(p), bparam, opts_bparam, ldatafmt)
+
+			continue
+		end if
+
 ; WRF=<wrf_parameter>
 		if( string_pattern_grep(params(p),"wrf=").gt.0 ) then
 			print ( "    WRF Parameter: " + params(p) )
