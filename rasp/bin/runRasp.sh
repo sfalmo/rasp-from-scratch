@@ -42,10 +42,10 @@ perl /root/rasp/bin/title2json.pl /root/rasp/${region}/OUT &> ${logDir}/title2js
 # Generate geotiffs from data files
 python3 /root/rasp/bin/rasp2geotiff.py /root/rasp/${region} &> ${logDir}/rasp2geotiff.out
 
-runSubdir="${regionDir}"
+runSubdir="${region}"
 if [[ "$START_DAY" != "0" ]]
 then
-  runSubdir="${regionDir}+${START_DAY}"
+  runSubdir="${region}+${START_DAY}"
 fi
 targetDir="${outDir}/${runSubdir}"
 mkdir -p ${targetDir}
