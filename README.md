@@ -5,8 +5,8 @@ Contrary to most other available setups, WRF is built from scratch.
 
 ## Build
 
-The process of building the final image is somewhat complicated as we do not want to bloat the image size.
-Therefore, the build happens in 3 stages.
+The building process is somewhat complicated as we do not want to bloat the image size of the final image that will be ready for production.
+Therefore, the build happens in 3 separate stages that result in intermediate images.
 Adapt the image tags in the Dockerfiles to your needs.
 
 ### Build base image
@@ -15,12 +15,14 @@ Adapt the image tags in the Dockerfiles to your needs.
 $ docker build -t <base tag> base
 ```
 
-This image is based on Fedora Linux and adds common utilities and libraries.
+This image will be used in the next steps.
+It is based on Fedora Linux and adds common utilities and libraries.
 
 ### Build WRF
 
 **Change `wrf/configure.wrf.patch` so that the binaries will be compatible with your CPU type!**
-You do this by specifying appropriate `-march` and `-mtune` compiler flags, e.g. if you intend to run WRF on Intel Haswell architectures, set `-march=haswell -mtune=haswell` (cf. GNU compiler manual for available options). If you run WRF on the same machine you use for compilation, set `-march=native -mtune=native`.
+You do this by specifying appropriate `-march` and `-mtune` compiler flags, e.g. if you intend to run WRF on Intel Haswell architectures, set `-march=haswell -mtune=haswell` (cf. GNU compiler manual for available options).
+If you run WRF on the same machine you use for compilation, set `-march=native -mtune=native`.
 
 ```shell
 $ docker build -t <wrf tag> wrf
@@ -42,12 +44,15 @@ Go to [UCAR's page](https://www2.mmm.ucar.edu/wrf/users/download/get_sources_wps
 $ docker build -t <rasp tag> rasp
 ```
 
-This sets up the directory structure for RASP runs, copies all the run and plotting scripts, copies the necessary binaries and run tables from the WRF image, sets up the RASP region and runs `geogrid.exe` on it.
+This sets up the directory structure for RASP runs with all necessary binaries and run tables from the WRF image as well as the RASP plotting environment.
+Copying the geographical data into the container and unzipping it will take a long time, so please be patient again.
+The region is automatically initialized by running `geogrid.exe`.
+
 Finally, in a second build stage, only the necessary artifacts are copied over from the first stage so that the final image remains at an optimal size.
 
 ### Adapt to your own region
 
-You can easily provide your own region by modifying the contents of `TIR` (which is the region I use) and rerunning the previous `docker build` command
+You can easily provide your own region by modifying the contents of `TIR` (which is the region I use) and rerunning the previous `docker build` command.
 Remember to also change some region specific aspects of the NCL scripts located in `rasp/GM`
 
 You need the following in your region folder:
@@ -63,9 +68,9 @@ Note that you can provide any custom tables that WRF/WPS recognizes in your regi
 ## Run 
 
 ```shell
-$ docker-compose run
+$ docker-compose run rasp
 ```
 
-Append `-d` to make this a background process.
+`run -d` makes this a background process.
 If you want an interactive shell to your container (e.g. for testing), append `/bin/bash`.
 When the container is running, execute the entry script `runRasp.sh <region>` to start the RASP run for your `<region>` manually.

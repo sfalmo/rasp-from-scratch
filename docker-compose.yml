@@ -1,5 +1,5 @@
 services:
-  tir:
+  rasp:
     image: eu.gcr.io/aufwinde/rasp:0.1
     build: .
     volumes:

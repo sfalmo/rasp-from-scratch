@@ -278,17 +278,9 @@ begin
 	v_plane@_FillValue = 0.
 	w_plane@_FillValue = 0.
 
-	if(Jack) then
-		u_plane  = wrf_user_intrp3d( ua, pmb, ter, "h", pressure, 0.)
-		v_plane  = wrf_user_intrp3d( va, pmb, ter, "h", pressure, 0.)
-		w_plane  = wrf_user_intrp3d( w,  pmb, ter, "h", pressure, 0.)
-
-	else ; NCL Version
-		u_plane  = wrf_user_intrp3d( ua, pmb, "h", pressure, 0., False)
-		v_plane  = wrf_user_intrp3d( va, pmb, "h", pressure, 0., False)
-		w_plane  = wrf_user_intrp3d( w,  pmb, "h", pressure, 0., False)
-
-	end if
+	u_plane  = wrf_user_intrp3d( ua, pmb, "h", pressure, 0., False)
+	v_plane  = wrf_user_intrp3d( va, pmb, "h", pressure, 0., False)
+	w_plane  = wrf_user_intrp3d( w,  pmb, "h", pressure, 0., False)
 
 	print("    press" + pressure +": u_plane min = " + min(u_plane) + " max = " + max(u_plane))
 	print("    press" + pressure +": v_plane min = " + min(v_plane) + " max = " + max(v_plane))

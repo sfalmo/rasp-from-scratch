@@ -34,24 +34,12 @@ td2      = wrf_user_getvar(f, "td2", time)      ; 2m dew point temp in C		Q2 (32
 td       = wrf_user_getvar(f, "td", time)       ; dew point temperature (C)		QVAPOR (51); P (26); PB (27); 
 tc       = wrf_user_getvar(f, "tc", time)       ; temperature (C)			T (15); P (26); PB (27);
 tc@_FillValue = -999.0
-
-if(Jack) then	; DrJack's wrf_user_getvar()
-	; uv       = wrf_user_getvar(f, "umeta", time )  ; u,v NOT rotated to grid   in m/s
-	uEW      = wrf_user_getvar(f, "umet", time )     ; u,v rotated to earth   in m/s	V (11); U (10)
-	vNS      = wrf_user_getvar(f, "vmet", time )     ; u,v rotated to earth   in m/s	V (11); U (10)
-	slvl     = wrf_user_getvar(f, "slvl", time)      ; Sea Level Pressurea			T (15); P (26); PB (27); QVAPOR (51); PH (13); PHB (14)
-	pmb      = wrf_user_getvar(f, "p", time)         ; press is vertical coordinate in mb	P (26); PB (27);
-	z        = wrf_user_getvar(f, "Z", time)	 ;					PH (13); PHB (14);
-else        	; NCL wrf_user_getvar()
-	uv       = wrf_user_getvar(f, "uvmet", time )    ; u,v NOT rotated to grid   in m/s
-	uEW      = uv(0,:,:,:)                           ; u,v rotated to grid   in m/s
-	vNS      = uv(1,:,:,:)                           ; u,v rotated to grid   in m/s
-	slvl     = wrf_user_getvar(f, "slp", time)       ; Sea Level Pressure
-							 ; "slp" should work for both V5 & V6
-	pmb      = wrf_user_getvar(f, "pressure", time)  ; press is vertical coordinate in mb
-							 ; "pressure" should work for V5 AND V6
-	z        = wrf_user_getvar(f,"z", time)
-end if
+uv       = wrf_user_getvar(f, "uvmet", time )    ; u,v NOT rotated to grid   in m/s
+uEW      = uv(0,:,:,:)                           ; u,v rotated to grid   in m/s
+vNS      = uv(1,:,:,:)                           ; u,v rotated to grid   in m/s
+slvl     = wrf_user_getvar(f, "slp", time)       ; Sea Level Pressure
+pmb      = wrf_user_getvar(f, "pressure", time)  ; press is vertical coordinate in mb
+z        = wrf_user_getvar(f,"z", time)
 
 paramdims= dimsizes(z)                                ; Get Dimensions
 nz       = paramdims(0)
@@ -88,9 +76,10 @@ centerlon = f@CEN_LON
 
 ; Get Soundings (i,j) from lat & lon spec'd in rasp.region_data.ncl (aka rasp.ncl.region.data)
 do idx = 1, info@nsoundings
-	locr = wrf_user_find_ij_lat_long(f, info@sounding_lats(idx), info@sounding_lons(idx))
-	info@i(idx) = floattointeger(locr(0))	; Note 0 based, but i[0] & j[0] not used here
-	info@j(idx) = floattointeger(locr(1))
+	opt = True
+	locr = wrf_user_ll_to_xy(f, info@sounding_lons(idx), info@sounding_lats(idx), opt)
+	info@i(idx) = locr(0)
+	info@j(idx) = locr(1)
 end do
 delete(idx)
 if(isvar("locr")) then

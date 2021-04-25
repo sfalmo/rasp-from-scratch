@@ -2598,13 +2598,8 @@ begin
 			u@_FillValue = 0.
 			v@_FillValue = 0.
 
-			if(Jack) then
-				u  = wrf_user_intrp3d( uEW, pmb, ter, "h", pressure, 0.)
-				v  = wrf_user_intrp3d( vNS, pmb, ter, "h", pressure, 0.)
-			else ; NCL Version
-				u  = wrf_user_intrp3d( uEW, pmb, "h", pressure, 0., False)
-				v  = wrf_user_intrp3d( vNS, pmb, "h", pressure, 0., False)
-			end if
+			u  = wrf_user_intrp3d( uEW, pmb, "h", pressure, 0., False)
+			v  = wrf_user_intrp3d( vNS, pmb, "h", pressure, 0., False)
 
 			print("    press" + pressure +": u min = " + min(u) + " max = " + max(u))
 			print("    press" + pressure +": v min = " + min(v) + " max = " + max(v))

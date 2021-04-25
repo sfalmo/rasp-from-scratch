@@ -31,24 +31,6 @@ end if
 ; If missing, or == 0, Use curr+n
 curr_only =  getenv("CURR_ONLY")
 
-getvar = getenv("GETVAR")
-if(ismissing(getvar)) then
-	Jack = True
-else
-	if(getvar .eq. "DRJACK") then
-		Jack = True
-	else
-		Jack = False
-	end if
-end if
-
-if(Jack) then
-	loadscript("wrf_user_mass.ncl")	; Required if using DrJack's wrf_user_getvar()
-else
-	print("*** WARNING: Using NCL wrf_user_getvar()")
-	; Built into NCL
-end if
-
 ; external NCL_JACK_FORTRAN "./ncl_jack_fortran.so"
 ; test_cuda = False
 ; NCL_JACK_FORTRAN :: cuda_set_debug(0)

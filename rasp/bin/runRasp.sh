@@ -33,7 +33,7 @@ runGM ${region}
 
 #Generate the meteogram images
 echo "Running meteogram on $(date)"
-cp /root/rasp/logo.svg ${region}/OUT/logo.svg
+cp /root/rasp/logo.svg ${regionDir}/OUT/logo.svg
 ncl /root/rasp/GM/meteogram.ncl DOMAIN=\"${region}\" SITEDATA=\"/root/rasp/GM/sitedata.ncl\" &> ${logDir}/meteogram.out
 
 # Generate title JSONs from data files
@@ -42,10 +42,10 @@ perl /root/rasp/bin/title2json.pl /root/rasp/${region}/OUT &> ${logDir}/title2js
 # Generate geotiffs from data files
 python3 /root/rasp/bin/rasp2geotiff.py /root/rasp/${region} &> ${logDir}/rasp2geotiff.out
 
-runSubdir="${region}"
+runSubdir="${regionDir}"
 if [[ "$START_DAY" != "0" ]]
 then
-  runSubdir="${region}+${START_DAY}"
+  runSubdir="${regionDir}+${START_DAY}"
 fi
 targetDir="${outDir}/${runSubdir}"
 mkdir -p ${targetDir}
