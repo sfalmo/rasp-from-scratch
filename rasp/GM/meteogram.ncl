@@ -8,8 +8,8 @@
 ; Add your meteogram locations to the sitedata.ncl file, for example 1,Terlet,d2,5.9233,52.0567,
 
 ; Document your changes and change the version number. BM stands for Blipmaps
-meteogram_version = "20210318"
-wrf_version = "3.6.1"
+meteogram_version = "20210426"
+wrf_version = "4.2.2"
 
 ; Changes in BM20210209 - ABC
 ; -Added non-metric conversion option

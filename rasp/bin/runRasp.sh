@@ -67,6 +67,9 @@ echo "Started running rasp at ${startDate} ${startTime}, ended at $(date)"
 
 if [[ "${WEBSERVER_SEND}" == "1" ]]
 then
+  # Get ssh key from environment
+  echo "${SSH_KEY}" > aufwinde_key
+  chmod 0600 aufwinde_key
   # Always sync contents of log directory
   rsync -e "ssh -i aufwinde_key -o StrictHostKeychecking=no" -rlt --delete-after "${logDir}/" "${WEBSERVER_USER}@${WEBSERVER_HOST}:${WEBSERVER_RESULTSDIR}/LOG/"
   if [[ "$(ls -A ${targetDir})" ]]

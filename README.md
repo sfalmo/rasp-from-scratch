@@ -20,9 +20,12 @@ It is based on Fedora Linux and adds common utilities and libraries.
 
 ### Build WRF
 
-**Change `wrf/configure.wrf.patch` so that the binaries will be compatible with your CPU type!**
-You do this by specifying appropriate `-march` and `-mtune` compiler flags, e.g. if you intend to run WRF on Intel Haswell architectures, set `-march=haswell -mtune=haswell` (cf. GNU compiler manual for available options).
-If you run WRF on the same machine you use for compilation, set `-march=native -mtune=native`.
+**Verify in `wrf/configure.wrf.patch` that the binaries will be compatible with the CPUs you intend to use!**
+If you run only on the same machine you use for this compilation, you can leave `-march=native -mtune=native`.
+Otherwise, set those flags according to the targeted architecture.
+
+You might run into problems in the next step if you specify an instruction set that is not available your current building machine!
+`geogrid.exe` will possibly crash with an `Illegal Instruction` error.
 
 ```shell
 $ docker build -t <wrf tag> wrf
@@ -34,6 +37,7 @@ WRF will be compiled with GNU compilers in smpar (i.e. OpenMP) mode (compilation
 
 We use the bare minimum of DrJack's patches to change WRF's registry, so that certain variables which are needed for the RASP plot routines appear in `wrfout` files.
 Note however, that DrJack's cloud calculation patches are not applied and thus, `wrf=CFRAC[L|M|H]` are not available (or wrong)!
+Use `cfrac[l|m|h]` instead, since those are provided by the current version of NCL.
 
 ### Build RASP
 

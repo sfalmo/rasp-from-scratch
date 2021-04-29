@@ -41,7 +41,8 @@ ENV PATH="${BASEDIR}/bin:${PATH}"
 # Set up region
 RUN mkdir TIR \
   && cp -r region.TEMPLATE/* TIR/
-COPY TIR/ $BASEDIR/TIR/
+# Copy only the stuff we need for geogrid.exe
+COPY TIR/*.wps* TIR/GEOGRID.TBL $BASEDIR/TIR/
 
 # Copy geog data and run geogrid
 COPY geog.tar.gz $BASEDIR
@@ -49,8 +50,11 @@ RUN tar xf geog.tar.gz \
   && cd $BASEDIR/TIR/ \
   && geogrid.exe \
   && rm -rf $BASEDIR/geog $BASEDIR/geog.tar.gz \
-  && rm -rf $BASEDIR/WRF_build
+  && rm -rf $BASEDIR/WRF_build \
+  && rm -rf $BASEDIR/region.TEMPLATE
 
+# Do this afterwards, because we do not want to trigger geogrid.exe each time namelist.input is changed
+COPY TIR/ $BASEDIR/TIR/
 
 # --- Actual RASP production image ---
 FROM eu.gcr.io/aufwinde/base:0.1
@@ -82,3 +86,5 @@ VOLUME ["$BASEDIR/TIR/OUT", "$BASEDIR/TIR/LOG"]
 # Set environment for interactive container shells
 RUN echo export BASEDIR=$BASEDIR >> /etc/bashrc \
   && echo export PATH+=:\$BASEDIR/bin >> /etc/bashrc
+
+CMD ["runRasp.sh", "TIR"]
