@@ -214,6 +214,21 @@ begin
 end
 
 ;
+; DGLIDER
+;
+function dglider(hcrit, zsfclcl, zblcl, ter, isize, jsize)
+begin
+	bparam = hcrit
+	cparam = new( (/jsize,isize/), float)
+	cparam = 0.0
+	min_2darrays( bparam, cparam, zsfclcl, 1.0, isize, jsize )
+	min_2darrays( bparam, cparam, zblcl, 2.0, isize, jsize )
+	bparam = bparam - ter
+
+	return(bparam)
+end
+
+;
 ; HWCRIT
 ;
 function hwcrit( wstar, ter, pblh, isize, jsize)
@@ -274,9 +289,9 @@ begin
 	; Note that DrJack's wrf_user_intrp3d has different arguments (than NCL), which include "terrain"
 	;;;;;;;;;;
 
-	u_plane@_FillValue = 0.
-	v_plane@_FillValue = 0.
-	w_plane@_FillValue = 0.
+	u_plane@_FillValue = -999
+	v_plane@_FillValue = -999
+	w_plane@_FillValue = -999
 
 	u_plane  = wrf_user_intrp3d( ua, pmb, "h", pressure, 0., False)
 	v_plane  = wrf_user_intrp3d( va, pmb, "h", pressure, 0., False)

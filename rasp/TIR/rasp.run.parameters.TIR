@@ -26,7 +26,7 @@ $LRUN_WINDOW{'TIR'} = 0 ;
 
 # SET BASIC PARAMETER LIST
 # @{$PARAMETER_DOLIST{'TIR'}} = ( 'sfctemp','sfcsunpct','hbl','experimental1','hglider','bltopvariab','wstar175','bsratio','sfcwind0','blwind','bltopwind','blwindshear','wblmaxmin','zwblmaxmin','zsfclclmask','zblclmask','sfcdewpt','cape','rain1','wrf=CFRACL','wrf=CFRACM','wrf=CFRACH','press955','press899','press846','press795','press701','press616','press540','wstar','blcloudpct','pfd_tot' );
-@{$PARAMETER_DOLIST{'TIR'}} = ( 'wstar','bsratio','wstar_bsratio','hglider','hwcrit','dwcrit','hbl','dbl','bltopvariab','wblmaxmin','zwblmaxmin','sfcsunpct','sfcshf','sfctemp','sfcdewpt','sfcwind0','blwind','bltopwind','blwindshear','zsfclcldif','zsfclcl','zsfclclmask','zblcldif','zblcl','zblclmask','blicw','blcwbase','blcloudpct','cfracl','cfracm','cfrach','rain1','cape','press950','press850','press700','press500','pfd_tot' );
+@{$PARAMETER_DOLIST{'TIR'}} = ( 'wstar','bsratio','wstar_bsratio','hglider','dglider','hwcrit','dwcrit','hbl','dbl','bltopvariab','wblmaxmin','zwblmaxmin','sfcsunpct','sfcshf','sfctemp','sfcdewpt','sfcwind0','blwind','bltopwind','blwindshear','zsfclcldif','zsfclcl','zsfclclmask','zblcldif','zblcl','zblclmask','blicw','blcwbase','blcloudpct','cfracl','cfracm','cfrach','rain1','cape','press950','press850','press700','press500','pfd_tot' );
 
 # ADD POSSIBLE SOUNDINGS (corresponding data must be set in file ../rasp-gm-TIR/GM/rasp.region_data.ncl)
 push @{$PARAMETER_DOLIST{'TIR'}}, ( 'sounding1','sounding2','sounding3','sounding4','sounding5','sounding6','sounding7','sounding8','sounding9' );

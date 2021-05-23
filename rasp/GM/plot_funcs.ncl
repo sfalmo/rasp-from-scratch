@@ -1644,6 +1644,7 @@ begin
 ;Hieronder toegevoegd als test
 			bparam = zblcl_mask
 			copy_VarAtts(atts, bparam)
+			bparam@_FillValue = -999999
 			write_datafile(params(p), bparam, opts_bparam, ldatafmt)
 ;Hierboven toegevoegd als test
 			continue
@@ -1823,6 +1824,7 @@ begin
 ;Hieronder toegevoegd als test
 			bparam = zsfclcl_mask
 			copy_VarAtts(atts, bparam)
+			bparam@_FillValue = -999999
 			write_datafile(params(p), bparam, opts_bparam, ldatafmt)
 ;Hierboven toegevoegd als test
 			continue
@@ -2139,6 +2141,47 @@ begin
 			end if
 			ldatafmt = plot_contour(wks, bg, hglider_mag, params(p), tail, alat, alon, gridspacingkm, opts_cn, opts_bparam, opts_bg, ldatafmt)
 			bparam = hglider_mag
+			copy_VarAtts(atts, bparam)
+			write_datafile(params(p), bparam, opts_bparam, ldatafmt)
+
+			continue
+		end if
+
+; DGLIDER
+		if( params(p) .eq. "dglider" ) then
+			opts_bparam@MainTitle = "Thermalling Depth"
+			if( UNITS .ne. "metric") then
+				opts_bparam@ContourParameters = (/ 0.,0., 500. /)
+				qparaminfo = "Param= "+params(p)+" Unit= ft Mult= 1"
+				opts_bparam@mult = 3.28084
+				opts_bparam@unitString = "ft"
+			else
+				; No default in rasp.bparam_resources.ncl!!
+				opts_bparam@ContourParameters = (/ 0.,0., 100. /)
+				qparaminfo = "Param= "+params(p)+" Unit= m Mult= 1"
+				opts_bparam@unitString = "m"
+			end if
+
+			if( .not. isvar("dglider_mag") ) then
+				if( .not. isvar("hwcrit_mag")) then
+					if( .not. isvar("wstar_mag")) then
+						print("    dglider: doing wstar")
+						wstar_mag = wstar(nx, ny, nz, vhf, pblh, hfx, tc ) ; in m/sec
+					end if
+					hwcrit_mag = hwcrit(wstar_mag, ter, pblh, nx, ny)
+				end if
+				if( .not. isvar("zsfclcl_mag")) then
+					print("    dglider: doing zsfclcl")
+					zsfclcl_mag = zsfclcl(pmb, tc, td, z, ter, pblh, nx, ny, nz)
+				end if
+				if( .not. isvar("zblcl_mag")) then
+					print("    dglider: doing zblcl")
+					zblcl_mag = zblcl( qvapor, z, ter, pblh, pmb, tc, nx, ny, nz)
+				end if
+				dglider_mag = dglider(hwcrit_mag, zsfclcl_mag, zblcl_mag, ter, nx, ny)
+			end if
+			ldatafmt = plot_contour(wks, bg, dglider_mag, params(p), tail, alat, alon, gridspacingkm, opts_cn, opts_bparam, opts_bg, ldatafmt)
+			bparam = dglider_mag
 			copy_VarAtts(atts, bparam)
 			write_datafile(params(p), bparam, opts_bparam, ldatafmt)
 
@@ -2547,6 +2590,7 @@ begin
 			ldatafmt = plot_contour( wks, bg, blcwbase_mag, params(p), tail, alat, alon, gridspacingkm, opts_cn, opts_bparam, opts_bg, ldatafmt)
 			bparam = blcwbase_mag
 			copy_VarAtts(atts, bparam)
+			bparam@_FillValue = -999999
 			write_datafile(params(p), bparam, opts_bparam, ldatafmt)
 
 			continue
@@ -2684,6 +2728,7 @@ begin
 			bparam@udata = u
 			bparam@vdata = v
 			copy_VarAtts(atts, bparam)
+			bparam@_FillValue = -999999
 
 			write_datafile(params(p), bparam, opts_bparam, ldatafmt)
 
