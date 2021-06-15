@@ -1,8 +1,8 @@
 ; USAGE: ncl meteogram.ncl DOMAIN=\"yourdomainname\"
 ; Add your meteogram locations to the sitedata.ncl file, for example 1,Terlet,d2,5.9233,52.0567,
 
-meteogram_version = "20210426"
-wrf_version = "4.2.2"
+meteogram_version = "20210615"
+wrf_version = "4.3"
 
 BASEDIR=getenv("BASEDIR")
 NCARG_ROOT=getenv("NCARG_ROOT")  

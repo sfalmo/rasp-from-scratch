@@ -1,4 +1,4 @@
-FROM eu.gcr.io/aufwinde/wrf:0.1 AS wrf
+FROM eu.gcr.io/aufwinde/wrf:4.3 AS wrf
 
 FROM eu.gcr.io/aufwinde/base:0.1 AS raspbuild
 ENV TZ=Europe/Berlin \

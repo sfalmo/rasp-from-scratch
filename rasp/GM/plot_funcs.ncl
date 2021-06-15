@@ -1288,14 +1288,9 @@ begin
 		tail = ".curr." + sprintf("%02.0f", gmthr) + sprintf("%02.0f", (gmthr - floor(gmthr)) * 60) + "lst." + tailstr
 	end if
 
-	; Do Plots ONLY on the Hour
 	; Always make data files
 	local_mins = str_split_by_length(local_hr, 2)
-	do_plots = True ; Default is to do plots
-;	if(local_mins(1) .ne. "00") then
-;		print("*** Data Files only - Time == " + local_hr + "!!")
-;		do_plots = False
-;	end if
+	do_plots = False
 
 	load "getvars.ncl"	; Inline code, so variables are local => discarded on exit from procedure
 				; New wrfout file will reload
@@ -1508,10 +1503,6 @@ begin
 
 ; SOUNDING
 		if( dimsizes(plot_param_chars) .gt. 9 .and. plot_param_chars(0:7) .eq. "sounding") then
-			if(do_plots .eq. False) then
-				continue
-			end if
-
 			;;; determine sounding number
 			char_str = chartostring( plot_param_chars(8:) )
 			if( plot_param_chars(8:8) .ne. "0" ) then
