@@ -399,6 +399,85 @@ begin
     dateStr = str_split(datepart, "-")
     newdateStr = dateStr(0) + " " + toint(dateStr(1)) + " " + toint(dateStr(2))
 
+    cmd_wstar = "grep -l '" + newdateStr + "' " + BaseDir + "/" + Region + "/OUT/wstar.*lst.d2.data"
+    wstar_files = systemfunc(cmd_wstar)
+    cmd_dglider = "grep -l '" + newdateStr + "' " + BaseDir + "/" + Region + "/OUT/dglider.*lst.d2.data"
+    dglider_files = systemfunc(cmd_dglider)
+    cmd_zsfclcldif = "grep -l '" + newdateStr + "' " + BaseDir + "/" + Region + "/OUT/zsfclcldif.*lst.d2.data"
+    zsfclcldif_files = systemfunc(cmd_zsfclcldif)
+    nfiles = dimsizes(wstar_files)
+    delete(cmd_wstar)
+    delete(cmd_dglider)
+    delete(cmd_zsfclcldif)
+
+    ; Read one file and extract nx & ny
+    ; Should be the same as in ENV_NCL_FILENAME but ...
+    f = wstar_files(0)
+    if(.not. fileexists(f) ) then
+        print(f + " does not exist!");
+        return(0)   ; pfdtot@valid is false!
+    end if
+    hdr = readAsciiHead(f, "Day")
+    nx = toint(extract_string_field(hdr(2), 11, " "))
+    ny = toint(extract_string_field(hdr(2), 13, " "))
+
+    pfdtot = new( (/ny,nx/), float)
+    pfdtot = 0.0
+    do i = 0, nfiles-2 ; Note: last file (i.e. for latest time) not included
+
+        ; Handle files
+        f_wstar = wstar_files(i)
+        ws = readAsciiTable(f_wstar, nx, "integer", 4)
+        f_dglider = dglider_files(i)
+        dg = readAsciiTable(f_dglider, nx, "integer", 4)
+        f_zsfclcldif = zsfclcldif_files(i)
+        cu = readAsciiTable(f_zsfclcldif, nx, "integer", 4)
+
+        ; Do calculation
+        a = -0.000302016415111608
+        b = 0.0729181700942301
+        c = -5.21488508245734
+        risk_fac = 0.3
+        w = ws / 100.0 - 1.0 ; Convert to m/s and subtract own sinkrate
+        w = w > 0.0
+        risk_dg = 2.0 / (1.0 + exp(-(dg-300.0)/1500.0 * (1.0/(risk_fac * risk_fac)-1.0))) - 1.0 ; cf. XCSoar: GlidePolar.cpp for formula
+        risk_dg = risk_dg > 0.0
+        risk_cu = 0.4 / (1.0 + exp(- (cu + 100.0) / 500.0 * (1.0/(risk_fac * risk_fac)-1.0))) + 0.6 ; always > 0
+        w = w * risk_dg * risk_cu
+        v_cruise = sqrt((c-w)/a)
+        sink_cruise = a*v_cruise*v_cruise + b*v_cruise + c
+        v_avg = v_cruise * w / (w - sink_cruise)
+        pfdtot = pfdtot + v_avg
+        delete( (/ws, w, dg, cu, risk_dg, risk_cu, v_cruise, sink_cruise, v_avg/) )
+
+    end do
+
+    ; Smoothen
+    wgt = (/ 1., 1., 1., 1., 1., 1., 1. /)
+    wgt = wgt / sum(wgt)
+    pfdtot@_FillValue = -999999
+    pfdtot = wgt_runave_n_Wrap(pfdtot, wgt, 1, 0)
+    pfdtot = wgt_runave_n_Wrap(pfdtot, wgt, 1, 1)
+
+    pfdtot@valid = True
+    return(pfdtot)
+end
+
+
+;
+; PDFTOT OLD
+;
+function pfd_old()
+begin
+    ; Uses only data files
+    ; Must select files with correct date and on full hours (i.e. minutes == 00lst)
+
+    filename_chars = stringtochar(getenv("ENV_NCL_FILENAME"))
+    len_filename = dimsizes(filename_chars)-2
+    datepart = chartostring(filename_chars(len_filename-18:len_filename-9))
+    dateStr = str_split(datepart, "-")
+    newdateStr = dateStr(0) + " " + toint(dateStr(1)) + " " + toint(dateStr(2))
+
     cmd = "grep -l '" + newdateStr + "' " + BaseDir + "/" + Region + "/OUT/wstar.*lst.d2.data"
     wstar_files = systemfunc(cmd)
     nfiles = dimsizes(wstar_files)
