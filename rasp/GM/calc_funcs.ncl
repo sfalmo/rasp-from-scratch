@@ -405,10 +405,13 @@ begin
     dglider_files = systemfunc(cmd_dglider)
     cmd_zsfclcldif = "grep -l '" + newdateStr + "' " + BaseDir + "/" + Region + "/OUT/zsfclcldif.*lst.d2.data"
     zsfclcldif_files = systemfunc(cmd_zsfclcldif)
+    cmd_bsratio = "grep -l '" + newdateStr + "' " + BaseDir + "/" + Region + "/OUT/bsratio.*lst.d2.data"
+    bsratio_files = systemfunc(cmd_bsratio)
     nfiles = dimsizes(wstar_files)
     delete(cmd_wstar)
     delete(cmd_dglider)
     delete(cmd_zsfclcldif)
+    delete(cmd_bsratio)
 
     ; Read one file and extract nx & ny
     ; Should be the same as in ENV_NCL_FILENAME but ...
@@ -432,23 +435,41 @@ begin
         dg = readAsciiTable(f_dglider, nx, "integer", 4)
         f_zsfclcldif = zsfclcldif_files(i)
         cu = readAsciiTable(f_zsfclcldif, nx, "integer", 4)
+        f_bsratio = bsratio_files(i)
+        bs = readAsciiTable(f_bsratio, nx, "integer", 4)
 
-        ; Do calculation
+        ; Parameters
         a = -0.000302016415111608
         b = 0.0729181700942301
         c = -5.21488508245734
-        risk_fac = 0.3
-        w = ws / 100.0 - 1.0 ; Convert to m/s and subtract own sinkrate
+        dg_amp = 2.0
+        dg_fac = 200.0
+        dg_offx = 300.0
+        dg_offy = -1.0
+        cu_amp = 0.3
+        cu_fac = 50.0
+        cu_offx = -100.0
+        cu_offy = 0.7
+        bs_amp = 2.0
+        bs_fac = 1.5
+        bs_offx = 1.0
+        bs_offy = -1.0
+
+        ; Do calculation
+        w = ws / 100.0 - 1.0 ; Convert to m/s and subtract sinkrate
         w = w > 0.0
-        risk_dg = 2.0 / (1.0 + exp(-(dg-300.0)/1500.0 * (1.0/(risk_fac * risk_fac)-1.0))) - 1.0 ; cf. XCSoar: GlidePolar.cpp for formula
-        risk_dg = risk_dg > 0.0
-        risk_cu = 0.4 / (1.0 + exp(- (cu + 100.0) / 500.0 * (1.0/(risk_fac * risk_fac)-1.0))) + 0.6 ; always > 0
-        w = w * risk_dg * risk_cu
+        dg_risk = dg_amp / (1.0 + exp(-(dg-dg_offx)/dg_fac)) + dg_offy
+        cu_risk = cu_amp / (1.0 + exp(-(cu-cu_offx)/cu_fac)) + cu_offy
+        bs_risk = bs_amp / (1.0 + exp(-(bs-bs_offx)/bs_fac)) + bs_offy
+        dg_risk = dg_risk > 0.0
+        cu_risk = cu_risk > 0.0
+        bs_risk = bs_risk > 0.0
+        w = w * dg_risk * cu_risk * bs_risk
         v_cruise = sqrt((c-w)/a)
         sink_cruise = a*v_cruise*v_cruise + b*v_cruise + c
         v_avg = v_cruise * w / (w - sink_cruise)
         pfdtot = pfdtot + v_avg
-        delete( (/ws, w, dg, cu, risk_dg, risk_cu, v_cruise, sink_cruise, v_avg/) )
+        delete( (/ws, w, dg, cu, dg_risk, cu_risk, bs_risk, v_cruise, sink_cruise, v_avg/) )
 
     end do
 
