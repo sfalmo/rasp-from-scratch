@@ -47,21 +47,25 @@ if [[ "$START_DAY" != "0" ]]
 then
   runSubdir="${region}+${START_DAY}"
 fi
-targetDir="${outDir}/${runSubdir}"
-mkdir -p ${targetDir}
-rm -rf ${targetDir}/*
+targetOutDir="${outDir}/${runSubdir}"
+targetLogDir="${logDir}/${runSubdir}"
+mkdir -p ${targetOutDir}
+mkdir -p ${targetLogDir}
+rm -rf ${targetOutDir}/*
+rm -rf ${targetLogDir}/*
 
 # Move results
-mv ${outDir}/*.data ${targetDir}
-mv ${outDir}/*.json ${targetDir}
-mv ${outDir}/*.tiff ${targetDir}
-mv ${outDir}/*.png ${targetDir}
-chmod 644 ${targetDir}/*
+mv ${outDir}/*.data ${targetOutDir}
+mv ${outDir}/*.json ${targetOutDir}
+mv ${outDir}/*.tiff ${targetOutDir}
+mv ${outDir}/*.png ${targetOutDir}
+chmod 644 ${targetOutDir}/*
 
-# Move log files for further analysis
-mv ${regionDir}/wrf.out ${logDir}
-mv ${regionDir}/metgrid.log ${logDir}
-mv ${regionDir}/ungrib.log ${logDir}
+# Move log files
+mv ${logDir}/* ${targetLogDir}
+mv ${regionDir}/wrf.out ${targetLogDir}
+mv ${regionDir}/metgrid.log ${targetLogDir}
+mv ${regionDir}/ungrib.log ${targetLogDir}
 
 echo "Started running rasp at ${startDate} ${startTime}, ended at $(date)"
 
@@ -71,11 +75,11 @@ then
   echo "${SSH_KEY}" > aufwinde_key
   chmod 0600 aufwinde_key
   # Always sync contents of log directory
-  rsync -e "ssh -i aufwinde_key -o StrictHostKeychecking=no" -rlt --delete-after "${logDir}/" "${WEBSERVER_USER}@${WEBSERVER_HOST}:${WEBSERVER_RESULTSDIR}/LOG/"
-  if [[ "$(ls -A ${targetDir})" ]]
+  rsync -e "ssh -i aufwinde_key -o StrictHostKeychecking=no" -rlt --delete-after ${targetLogDir} "${WEBSERVER_USER}@${WEBSERVER_HOST}:${WEBSERVER_RESULTSDIR}/LOG/"
+  if [[ "$(ls -A ${targetOutDir})" ]]
   then
     # If there is output, sync it. Otherwise, back off and be happy with the data that is already on the webserver
-    rsync -e "ssh -i aufwinde_key -o StrictHostKeychecking=no" -rlt --delete-after ${targetDir} "${WEBSERVER_USER}@${WEBSERVER_HOST}:${WEBSERVER_RESULTSDIR}/OUT/"
+    rsync -e "ssh -i aufwinde_key -o StrictHostKeychecking=no" -rlt --delete-after ${targetOutDir} "${WEBSERVER_USER}@${WEBSERVER_HOST}:${WEBSERVER_RESULTSDIR}/OUT/"
   fi
 fi
 
