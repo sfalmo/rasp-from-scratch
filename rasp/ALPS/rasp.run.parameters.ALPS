@@ -1,0 +1,112 @@
+#############################################################################
+################## RUN-ARGUMENT-SPECIFIC RASP PARAMETERS ####################
+#############################################################################
+### For updated information on these model parameters see                 ###
+### http://www.drjack.info/twiki/bin/view/RASPop/RunParametersDescription ###
+#############################################################################
+
+# SET REGIONS PROCESSED BY THIS RUN
+@REGION_DOLIST = ( 'ALPS' );
+
+# SET MODEL USED FOR DOWNLOADED GRIB FILES
+$GRIBFILE_MODEL  = 'GFSA' ;
+$GRIB_LEFT_LON   =  0 ;
+$GRIB_RIGHT_LON  =  20 ;
+$GRIB_BOTTOM_LAT =  45 ;
+$GRIB_TOP_LAT    =  55 ;
+
+$LSEND = 0 ;
+$LSAVE = 0 ;
+
+##################################################################
+#############  START OF REGION DEPENDENT PARAMETERS  #############
+# SET RUN TYPE
+# LRUN_WINDOW 0= no_windowing 2= windowing_run
+$LRUN_WINDOW{'ALPS'} = 0 ;
+
+# SET BASIC PARAMETER LIST
+# @{$PARAMETER_DOLIST{'ALPS'}} = ( 'sfctemp','sfcsunpct','hbl','experimental1','hglider','bltopvariab','wstar175','bsratio','sfcwind0','blwind','bltopwind','blwindshear','wblmaxmin','zwblmaxmin','zsfclclmask','zblclmask','sfcdewpt','cape','rain1','wrf=CFRACL','wrf=CFRACM','wrf=CFRACH','press955','press899','press846','press795','press701','press616','press540','wstar','blcloudpct','pfd_tot' );
+@{$PARAMETER_DOLIST{'ALPS'}} = ( 'wstar','bsratio','wstar_bsratio','hglider','dglider','hwcrit','dwcrit','hbl','dbl','bltopvariab','wblmaxmin','zwblmaxmin','sfcsunpct','sfcshf','sfctemp','sfcdewpt','sfcwind0','blwind','bltopwind','blwindshear','zsfclcldif','zsfclcl','zsfclclmask','zblcldif','zblcl','zblclmask','blicw','blcwbase','blcloudpct','cfracl','cfracm','cfrach','rain1','cape','press950','press850','press700','press500','pfd_tot' );
+
+# ADD POSSIBLE SOUNDINGS (corresponding data must be set in file ../rasp-gm-ALPS/GM/rasp.region_data.ncl)
+push @{$PARAMETER_DOLIST{'ALPS'}}, ( 'sounding1' );
+
+$LOCALTIME_ID{'ALPS'}  = substr `date +%Z`,0,3;
+$LOCALTIME_ADJ{'ALPS'} = substr `date +%z`,0,3;
+
+# SET GRIB FILE PROCESSING
+# GRIBFILES_PER_FORECAST_PERIOD IS NUMBER OF GRIB FILES PROCESSED AT SAME TIME
+#12_hr:
+$GRIBFILES_PER_FORECAST_PERIOD{'ALPS'} = 5 ;
+# BLIPMAPFILEDOLIST LISTS ALL GRIB FILES NEEDED
+#%GRIBFILE_DOLIST = ( 'ALPS'   => [ '0Z+6','0Z+9','0Z+12','0Z+15','0Z+18' ],);
+
+$day = 0;
+$offset = 0;
+$hourSix = 6;
+
+if(defined $ENV{'START_DAY'}) {
+    $day = int($ENV{'START_DAY'});
+}
+if(defined $ENV{'OFFSET_HOUR'}) {
+    $offset = int($ENV{'OFFSET_HOUR'});
+}
+# So one of the prerequisites is that if you define an offset, you should
+# make sure that the number does not become negative !!!
+$hourSix += 24*$day - $offset;
+
+%GRIBFILE_DOLIST = ( 'ALPS'   => [ sprintf("%dZ+%d",$offset,$hourSix),
+                                  sprintf("%dZ+%d",$offset,$hourSix+3),
+                                  sprintf("%dZ+%d",$offset,$hourSix+6),
+                                  sprintf("%dZ+%d",$offset,$hourSix+9),
+                                  sprintf("%dZ+%d",$offset,$hourSix+12) ],);
+
+# SET DOMAIN PARAMETERS FOR STAGE1 [NON-WINDOW] ITERATION
+$FORECAST_PERIODHRS{'ALPS'}[0]              = 12;  # used only by initialization programs
+$BOUNDARY_UPDATE_PERIODHRS{'ALPS'}[0]       = 3;   # used only by initialization programs
+$NDOWN_BOUNDARY_UPDATE_PERIODHRS{'ALPS'}[0] = 0;   # should always be 0 for non-windowed case
+
+# SET DOMAIN START/END TIMES
+$DOMAIN1_STARTHH{'ALPS'}[0]         = '06';        # must have grib file available for this time
+$DOMAIN1_ENDHH{'ALPS'}[0]           = '18';
+$DOMAIN1_TIMESTEP{'ALPS'}[0]        = 180;
+$DOMAIN2_START_DELTAMINS{'ALPS'}[0] = 0;           # if non-zero, must set namelist.template INPUT_FROM_FILE=false
+$DOMAIN2_END_DELTAMINS{'ALPS'}[0]   = 0;           # relative to domain1
+$DOMAIN3_START_DELTAMINS{'ALPS'}[0] = 360;         # if non-zero, must set namelist.template INPUT_FROM_FILE=false
+$DOMAIN3_END_DELTAMINS{'ALPS'}[0]   = -180;        # relative to domain1
+
+# SET BLIPMAP IMAGE SIZES  - 1st,2nd value for 1st,2nd domain - blank=NOplot
+@{$PLOT_IMAGE_SIZE{'ALPS'}[0]} = ( '', '1600x1600' );
+
+# SET HISTORY HOUR FOR IMAGES PLOTTED WHEN $PLOT_IMAGE_SIZE FOR THAT DOMAIN NOT BLANK
+# for non-threaded output times to plot (depends upon history output length and increment)
+@{$PLOT_HHMMLIST{'ALPS'}[0]} =       ( '0700','0800','0900','1000','1100','1200','1300','1400','1500','1600','1700','1800');
+@{$SAVE_PLOT_HHMMLIST{'ALPS'}[0]} =  ( '0700','0800','0900','1000','1100','1200','1300','1400','1500','1600','1700','1800'); # times must also be in @{$PLOT_HHMMLIST{'ALPS'}[0]}
+
+# FOR WINDOWED ITERATION (not used if no windowing done_)
+# PAULS - CRASHES -  $FORECAST_PERIODHRS{'ALPS'}[1] = 12;
+$FORECAST_PERIODHRS{'ALPS'}[1] = 9;
+$BOUNDARY_UPDATE_PERIODHRS{'ALPS'}[1] = 1;
+# NDOWN_BOUNDARY_UPDATE_PERIODHRS must agree with history output interval (but its in minutes)
+$NDOWN_BOUNDARY_UPDATE_PERIODHRS{'ALPS'}[1] = 1;
+$DOMAIN1_TIMESTEP{'ALPS'}[1] = 60;
+
+# SET DOMAIN START/END TIMES
+$DOMAIN1_STARTHH{'ALPS'}[1] = '09';              # must have grib file available at or prior to this time
+$DOMAIN1_ENDHH{'ALPS'}[1] = '18';
+$DOMAIN2_START_DELTAMINS{'ALPS'}[1] = 0;         # if non-zero, must set namelist.template INPUT_FROM_FILE=false
+$DOMAIN2_END_DELTAMINS{'ALPS'}[1] = 0;           # relative to domain1
+$DOMAIN3_START_DELTAMINS{'ALPS'}[1] = 0;         # if non-zero, must set namelist.template INPUT_FROM_FILE=false
+$DOMAIN3_END_DELTAMINS{'ALPS'}[1] = 0;           # relative to domain1
+
+### SET BLIPMAP IMAGE SIZES  - 1st,2nd value for 1st,2nd domain - blank=NOplot
+@{$PLOT_IMAGE_SIZE{'ALPS'}[1]} = ( '', '1000x1000' );
+
+# CREATE WEBSITE LOOP IMAGES FOR THIS REGION
+@{$PLOT_LOOP_HHMMLIST{'ALPS'}[1]} = ( 'title', '0800', '0900', '1000', '1100', '1200', '1300','1400', '1500', '1600', '1700', '1800' ) ;
+
+##############  END OF REGION DEPENDENT PARAMETERS  ##############
+##################################################################
+##########    ADDITIONS MUST BE MADE ABOVE THIS LINE    ##########
+##################################################################
+1.;

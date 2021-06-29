@@ -56,8 +56,8 @@ Finally, in a second build stage, only the necessary artifacts are copied over f
 
 ### Adapt to your own region
 
-You can easily provide your own region by modifying the contents of `TIR` (which is the region I use) and rerunning the previous `docker build` command.
-Remember to also change some region specific aspects of the NCL scripts located in `rasp/GM`
+You can easily provide your own region by providing a region folder similar to `TIR` (which is the region I use) and rerunning the previous `docker build` command with `--build-arg region=<your region folder>`.
+Remember to also change some region specific aspects of the NCL scripts located in `rasp/GM`.
 
 You need the following in your region folder:
  - `namelist.wps` and `namelist.wps.template` (identical) for WPS

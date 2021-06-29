@@ -1,11 +1,10 @@
 services:
   rasp:
-    image: eu.gcr.io/aufwinde/rasp:wrf4.3_tir
+    image: eu.gcr.io/aufwinde/rasp:WRF4.3_${region}
     build: .
     volumes:
-      - ../results/OUT:/root/rasp/TIR/OUT
-      - ../results/LOG:/root/rasp/TIR/LOG
+      - ../results/OUT:/root/rasp/${region}/OUT
+      - ../results/LOG:/root/rasp/${region}/LOG
     environment:
       - START_DAY=${START_DAY:-0}
       - OFFSET_HOUR=${OFFSET_HOUR:-0}
-    command: ["runRasp.sh", "TIR"]

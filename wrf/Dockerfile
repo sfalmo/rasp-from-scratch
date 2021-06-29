@@ -1,4 +1,5 @@
-FROM eu.gcr.io/aufwinde/base:0.1
+ARG base_image=eu.gcr.io/aufwinde/base:0.1
+FROM ${base_image}
 
 # required packages
 RUN dnf update -y && dnf install -y \

@@ -1,6 +1,11 @@
-FROM eu.gcr.io/aufwinde/wrf:4.3 AS wrf
+ARG base_image=eu.gcr.io/aufwinde/base:0.1
+ARG wrf_image=eu.gcr.io/aufwinde/wrf:4.3
+ARG region=TIR
 
-FROM eu.gcr.io/aufwinde/base:0.1 AS raspbuild
+FROM ${wrf_image} AS wrf
+
+FROM ${base_image} AS raspbuild
+ARG region
 ENV TZ=Europe/Berlin \
   BASEDIR=/root/rasp
 COPY --from=wrf /root/rasp/ $BASEDIR
@@ -39,25 +44,27 @@ COPY ncl_jack/libncl_jack.nocuda.so ncl_jack/libwrf_user.nocuda.so $BASEDIR/lib/
 ENV PATH="${BASEDIR}/bin:${PATH}"
 
 # Set up region
-RUN mkdir TIR \
-  && cp -r region.TEMPLATE/* TIR/
+RUN mkdir ${region} \
+  && cp -r region.TEMPLATE/* ${region}/
 # Copy only the stuff we need for geogrid.exe
-COPY TIR/*.wps* TIR/GEOGRID.TBL $BASEDIR/TIR/
+COPY ${region}/*.wps* ${region}/GEOGRID.TBL $BASEDIR/${region}/
 
 # Copy geog data and run geogrid
 COPY geog.tar.gz $BASEDIR
 RUN tar xf geog.tar.gz \
-  && cd $BASEDIR/TIR/ \
+  && cd "$BASEDIR/${region}/" \
   && geogrid.exe \
   && rm -rf $BASEDIR/geog $BASEDIR/geog.tar.gz \
   && rm -rf $BASEDIR/WRF_build \
   && rm -rf $BASEDIR/region.TEMPLATE
 
 # Do this afterwards, because we do not want to trigger geogrid.exe each time namelist.input is changed
-COPY TIR/ $BASEDIR/TIR/
+COPY ${region}/ $BASEDIR/${region}/
+RUN mv $BASEDIR/${region}/rasp.region_data.ncl $BASEDIR/${region}/sitedata.ncl $BASEDIR/GM/
 
 # --- Actual RASP production image ---
-FROM eu.gcr.io/aufwinde/base:0.1
+FROM ${base_image}
+ARG region
 COPY --from=raspbuild /root/rasp/ $BASEDIR
 ENV PATH="${BASEDIR}/bin:${PATH}"
 
@@ -81,10 +88,10 @@ RUN (echo y;echo o conf prerequisites_policy follow;echo o conf commit) | cpan \
 COPY ncl_jack/WRFUserARW.ncl.patch $BASEDIR/GM/
 RUN patch /usr/lib/ncarg/nclscripts/wrf/WRFUserARW.ncl $BASEDIR/GM/WRFUserARW.ncl.patch
 
-VOLUME ["$BASEDIR/TIR/OUT", "$BASEDIR/TIR/LOG"]
+VOLUME ["$BASEDIR/${region}/OUT", "$BASEDIR/${region}/LOG"]
 
 # Set environment for interactive container shells
 RUN echo export BASEDIR=$BASEDIR >> /etc/bashrc \
   && echo export PATH+=:\$BASEDIR/bin >> /etc/bashrc
 
-CMD ["runRasp.sh", "TIR"]
+CMD ["runRasp.sh", "${region}"]
