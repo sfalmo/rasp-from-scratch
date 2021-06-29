@@ -47,7 +47,7 @@
  time_step_fract_num                 = 0,
  time_step_fract_den                 = 1,
  max_dom                             = 2,
- e_we                                = 90,     226,
+ e_we                                = 94,     226,
  e_sn                                = 90,     166,
  e_vert                              = 52,     52,    30,
  p_top_requested                     = 5000,
@@ -57,7 +57,7 @@
  grid_id                             = 1,      2,     3,
  parent_id                           = 0,      1,     2,
  i_parent_start                      = 1,      25,
- j_parent_start                      = 1,      25,
+ j_parent_start                      = 1,      29,
  parent_grid_ratio                   = 1,      5
  parent_time_step_ratio              = 1,      5
  feedback                            = 1,

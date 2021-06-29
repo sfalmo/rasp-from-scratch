@@ -1,6 +1,6 @@
 services:
   rasp:
-    image: eu.gcr.io/aufwinde/rasp:WRF4.3_${region}
+    image: ${rasp_image}:${wrf}_${region}
     build: .
     volumes:
       - ../results/OUT:/root/rasp/${region}/OUT
