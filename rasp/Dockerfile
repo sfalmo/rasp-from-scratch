@@ -65,6 +65,7 @@ RUN mv $BASEDIR/${region}/rasp.region_data.ncl $BASEDIR/${region}/sitedata.ncl $
 # --- Actual RASP production image ---
 FROM ${base_image}
 ARG region
+ENV region ${region}
 COPY --from=raspbuild /root/rasp/ $BASEDIR
 ENV PATH="${BASEDIR}/bin:${PATH}"
 
