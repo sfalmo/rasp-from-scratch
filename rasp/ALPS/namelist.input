@@ -38,7 +38,7 @@
  max_step_increase_pct               = 5, 51, 51
  starting_time_step                  = -1,   -1,   -1
  starting_time_step_den              =  0,    0,    0
- max_time_step                       = 75,   15,
+ max_time_step                       = 40,    8,
  max_time_step_den                   =  0,    0,    0
  min_time_step                       = -1,   -1,   -1
  min_time_step_den                   =  0,    0,    0
@@ -47,8 +47,8 @@
  time_step_fract_num                 = 0,
  time_step_fract_den                 = 1,
  max_dom                             = 2,
- e_we                                = 94,     226,
- e_sn                                = 90,     166,
+ e_we                                = 90,     206,
+ e_sn                                = 90,     206,
  e_vert                              = 52,     52,    30,
  p_top_requested                     = 5000,
  num_metgrid_soil_levels             = 4,
@@ -57,7 +57,7 @@
  grid_id                             = 1,      2,     3,
  parent_id                           = 0,      1,     2,
  i_parent_start                      = 1,      25,
- j_parent_start                      = 1,      29,
+ j_parent_start                      = 1,      25,
  parent_grid_ratio                   = 1,      5
  parent_time_step_ratio              = 1,      5
  feedback                            = 1,
@@ -88,6 +88,9 @@
  bldt                                = 0,     0,     0,
  cu_physics                          = 1,     0,     0,
  cudt                                = 5,     5,     5,
+ slope_rad                           = 1,     1,     1,
+ topo_shading                        = 1,     1,     1,
+ shadlen                             = 10000.
  isfflx                              = 1,
  ifsnow                              = 1,
  icloud                              = 1,

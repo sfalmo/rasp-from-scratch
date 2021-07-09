@@ -43,14 +43,16 @@ COPY ncl_jack/libncl_jack.nocuda.so ncl_jack/libwrf_user.nocuda.so $BASEDIR/lib/
 
 ENV PATH="${BASEDIR}/bin:${PATH}"
 
+# Copy geog data
+COPY geog.tar.gz $BASEDIR
+
 # Set up region
 RUN mkdir ${region} \
   && cp -r region.TEMPLATE/* ${region}/
 # Copy only the stuff we need for geogrid.exe
 COPY ${region}/*.wps* ${region}/GEOGRID.TBL $BASEDIR/${region}/
 
-# Copy geog data and run geogrid
-COPY geog.tar.gz $BASEDIR
+# Extract geog data and run geogrid
 RUN tar xf geog.tar.gz \
   && cd "$BASEDIR/${region}/" \
   && geogrid.exe \
@@ -95,4 +97,4 @@ VOLUME ["$BASEDIR/${region}/OUT", "$BASEDIR/${region}/LOG"]
 RUN echo export BASEDIR=$BASEDIR >> /etc/bashrc \
   && echo export PATH+=:\$BASEDIR/bin >> /etc/bashrc
 
-CMD ["runRasp.sh", "${region}"]
+CMD runRasp.sh ${region}
