@@ -1,7 +1,28 @@
 services:
+  base:
+    image: ${base_image}
+    build:
+      context: ./base
+      dockerfile: Dockerfile
+  wrf:
+    image: ${wrf_image}:${wrf_version}
+    build:
+      context: ./wrf
+      dockerfile: Dockerfile
+      args:
+        base_image: ${base_image}
+        wrf_version: ${wrf_version}
+        wps_version: ${wps_version}
   rasp:
-    image: ${rasp_image}:${wrf}_${region}
-    build: .
+    image: ${rasp_image}:WRF${wrf_version}_${region}
+    build:
+      context: ./rasp
+      dockerfile: Dockerfile
+      args:
+        base_image: ${base_image}
+        wrf_image: ${wrf_image}
+        wrf_version: ${wrf_version}
+        region: ${region}
     volumes:
       - ../results/OUT:/root/rasp/${region}/OUT
       - ../results/LOG:/root/rasp/${region}/LOG

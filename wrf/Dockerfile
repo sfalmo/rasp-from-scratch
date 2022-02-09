@@ -1,5 +1,10 @@
-ARG base_image=eu.gcr.io/aufwinde/base:0.1
+ARG wrf_version
+ARG wps_version
+ARG base_image
+
 FROM ${base_image}
+ARG wrf_version
+ARG wps_version
 
 # required packages
 RUN dnf update -y && dnf install -y \
@@ -8,13 +13,6 @@ RUN dnf update -y && dnf install -y \
   netcdf-devel netcdf-fortran-devel \
   libpng-devel jasper-devel \
   && dnf clean all
-
-RUN mkdir WRF_build && cd WRF_build \
-  && git clone https://github.com/wrf-model/WRF.git \
-  && git clone https://github.com/wrf-model/WPS.git
-
-COPY Registry.EM_COMMON.patch configure.wrf.patch $BASEDIR/WRF_build/WRF/
-COPY configure.wps.patch $BASEDIR/WRF_build/WPS/
 
 ENV CC=gcc \
   CXX=g++ \
@@ -25,12 +23,20 @@ ENV CC=gcc \
   NETCDF=/usr \
   NETCDF_classic=1
 
-RUN cd $BASEDIR/WRF_build/WRF \
+RUN mkdir build && cd build \
+  && git clone --branch ${wrf_version} --depth 1 https://github.com/wrf-model/WRF.git \
+  && git clone --branch ${wps_version} --depth 1 https://github.com/wrf-model/WPS.git
+
+COPY Registry.EM_COMMON.patch configure.wrf.patch $BASEDIR/build/WRF/
+RUN cd $BASEDIR/build/WRF \
   && patch Registry/Registry.EM_COMMON Registry.EM_COMMON.patch \
   && printf "33\n1\n" | ./configure \
   && patch configure.wrf configure.wrf.patch \
-  && ./compile -j 8 em_real \
-  && cd ../WPS \
+  && ./compile -j 8 em_real
+
+# Must be build after WRF
+COPY configure.wps.patch $BASEDIR/build/WPS/
+RUN cd $BASEDIR/build/WPS \
   && printf "1\n" | ./configure \
   && patch configure.wps configure.wps.patch \
   && ./compile
@@ -49,7 +55,4 @@ RUN cd $BASEDIR/WRF_build/WRF \
 # 2) Edit configure.wps:
 #    - Add "-I/usr/lib64/gfortran/modules" to WRF_INCLUDE
 #    - Add "-lnetcdff -fopenmp" to WRF_LIB
-#    - Add "-fallow-argument-mismatch -fallow-invalid-boz" to FFLAGS and F77FLAGS
 # 3) ./compile
-
-

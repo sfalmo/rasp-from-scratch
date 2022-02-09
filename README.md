@@ -5,14 +5,14 @@ Contrary to most other available setups, WRF is built from scratch.
 
 ## Build
 
-The building process is somewhat complicated as we do not want to bloat the image size of the final image that will be ready for production.
+The building process is somewhat complicated as we want to keep the final image size as small as possible.
 Therefore, the build happens in 3 separate stages that result in intermediate images.
-Adapt the image tags in the Dockerfiles to your needs.
+`docker-compose` should be used for the build, because it lets you configure certain variables in a `.env` file (copy or rename the provided template and adapt the documented variables to your needs).
 
 ### Build base image
 
 ```shell
-$ docker build -t <base tag> base
+$ docker-compose build base
 ```
 
 This image will be used in the next steps.
@@ -20,24 +20,26 @@ It is based on Fedora Linux and adds common utilities and libraries.
 
 ### Build WRF
 
-**Verify in `wrf/configure.wrf.patch` that the binaries will be compatible with the CPUs you intend to use!**
-If you run only on the same machine you use for this compilation, you can leave `-march=native -mtune=native`.
-Otherwise, set those flags according to the targeted architecture.
+**`wrf/configure.wrf.patch` applies optimization options regarding the CPU architecture. Make sure that both your build machine as well as your production server support the given architectures!**
+If you will run RASP on the same machine that you use for this build, you can leave `-march=native -mtune=native`.
+Otherwise, set those flags accordingly (or remove them).
 
 You might run into problems in the next step if you specify an instruction set that is not available your current building machine!
 `geogrid.exe` will possibly crash with an `Illegal Instruction` error.
 
 ```shell
-$ docker build -t <wrf tag> wrf
+$ docker-compose build wrf
 ```
 
-WRF and WPS are fetched from GitHub and compiled from source.
+The version of WRF and WPS you have specified in `.env` are fetched from GitHub and compiled from source.
 This can take a long time, so be patient and do not worry about the verbose output!
+Note that the provided patches might not work for arbitrary versions of WRF and WPS.
+
 WRF will be compiled with GNU compilers in smpar (i.e. OpenMP) mode (compilation option 33) and with basic nesting support (nesting option 1).
 
 We use the bare minimum of DrJack's patches to change WRF's registry, so that certain variables which are needed for the RASP plot routines appear in `wrfout` files.
 Note however, that DrJack's cloud calculation patches are not applied and thus, `wrf=CFRAC[L|M|H]` are not available (or wrong)!
-Use `cfrac[l|m|h]` instead, since those are provided by the current version of NCL.
+Use `cfrac[l|m|h]` instead, since those are implemented in the current version of NCL.
 
 ### Build RASP
 
@@ -45,12 +47,12 @@ Use `cfrac[l|m|h]` instead, since those are provided by the current version of N
 Go to [UCAR's page](https://www2.mmm.ucar.edu/wrf/users/download/get_sources_wps_geog.html) and download the appropriate bundle.
 
 ```shell
-$ docker build -t <rasp tag> rasp
+$ docker-compose build rasp
 ```
 
 This sets up the directory structure for RASP runs with all necessary binaries and run tables from the WRF image as well as the RASP plotting environment.
 Copying the geographical data into the container and unzipping it will take a long time, so please be patient again.
-The region is automatically initialized by running `geogrid.exe`.
+The region you have specified in `.env` is automatically initialized by running `geogrid.exe`.
 
 Finally, in a second build stage, only the necessary artifacts are copied over from the first stage so that the final image remains at an optimal size.
 
@@ -60,9 +62,9 @@ You can easily provide your own region by providing a region folder similar to `
 Remember to also change some region specific aspects of the NCL scripts located in `rasp/GM`.
 
 You need the following in your region folder:
- - `namelist.wps` and `namelist.wps.template` (identical) for WPS
- - `namelist.input` and `namelist.input.template` (identical) for WRF
- - A symlink named `Vtable` to the Variable Table filename you want to use for your GRIB files, e.g. for GFS: `ln -s Vtable.GFS Vtable`. The actual table file does not have to exist on your host machine, it will be provided by the WRF image during build time.
+ - `namelist.wps` for WPS
+ - `namelist.input` for WRF
+ - A symlink named `Vtable` to the Variable Table filename you want to use for your GRIB files, e.g. for GFS: `ln -s Vtable.GFS Vtable`. The actual table file does not have to exist on your host machine, it will be provided by the WRF image.
 
 If you use non-stock geog data (e.g. SRTM):
  - Your custom `GEOGRID.TBL`
@@ -76,5 +78,6 @@ $ docker-compose run rasp
 ```
 
 `run -d` makes this a background process.
+
 If you want an interactive shell to your container (e.g. for testing), append `/bin/bash`.
-When the container is running, execute the entry script `runRasp.sh <region>` to start the RASP run for your `<region>` manually.
+Then, inside the container, execute the entry script `bin/runRasp.sh <region>` to start the RASP run for your `<region>` manually.

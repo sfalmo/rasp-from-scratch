@@ -1,8 +1,9 @@
-ARG base_image=eu.gcr.io/aufwinde/base:0.1
-ARG wrf_image=eu.gcr.io/aufwinde/wrf:4.3
-ARG region=TIR
+ARG base_image
+ARG wrf_image
+ARG wrf_version
+ARG region
 
-FROM ${wrf_image} AS wrf
+FROM ${wrf_image}:${wrf_version} AS wrf
 
 FROM ${base_image} AS raspbuild
 ARG region
@@ -10,8 +11,8 @@ ENV TZ=Europe/Berlin \
   BASEDIR=/root/rasp
 COPY --from=wrf /root/rasp/ $BASEDIR
 
-ENV WRF_DIR="${BASEDIR}/WRF_build/WRF" \
-  WPS_DIR="${BASEDIR}/WRF_build/WPS"
+ENV WRF_DIR="${BASEDIR}/build/WRF" \
+  WPS_DIR="${BASEDIR}/build/WPS"
 
 # Copy WRF executables and scripts to rasp bin folder
 RUN mkdir $BASEDIR/bin \
@@ -50,19 +51,21 @@ COPY geog.tar.gz $BASEDIR
 RUN mkdir ${region} \
   && cp -r region.TEMPLATE/* ${region}/
 # Copy only the stuff we need for geogrid.exe
-COPY ${region}/*.wps* ${region}/GEOGRID.TBL $BASEDIR/${region}/
+COPY ${region}/namelist.wps ${region}/GEOGRID.TBL $BASEDIR/${region}/
+RUN cp ${region}/namelist.wps ${region}/namelist.wps.template
 
 # Extract geog data and run geogrid
 RUN tar xf geog.tar.gz \
   && cd "$BASEDIR/${region}/" \
   && geogrid.exe \
   && rm -rf $BASEDIR/geog $BASEDIR/geog.tar.gz \
-  && rm -rf $BASEDIR/WRF_build \
+  && rm -rf $BASEDIR/build \
   && rm -rf $BASEDIR/region.TEMPLATE
 
 # Do this afterwards, because we do not want to trigger geogrid.exe each time namelist.input is changed
 COPY ${region}/ $BASEDIR/${region}/
-RUN mv $BASEDIR/${region}/rasp.region_data.ncl $BASEDIR/${region}/sitedata.ncl $BASEDIR/GM/
+RUN cp ${region}/namelist.input ${region}/namelist.input.template \
+  && mv $BASEDIR/${region}/rasp.region_data.ncl $BASEDIR/${region}/sitedata.ncl $BASEDIR/GM/
 
 # --- Actual RASP production image ---
 FROM ${base_image}
