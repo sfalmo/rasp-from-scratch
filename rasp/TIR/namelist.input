@@ -84,6 +84,7 @@
  sf_sfclay_physics                   = 1,     1,     1,
  sf_surface_physics                  = 2,     2,     2,
  sf_urban_physics                    = 0,     0,     0,
+ sf_lake_physics                     = 1,     1,     1,
  bl_pbl_physics                      = 1,     1,     1,
  bldt                                = 0,     0,     0,
  topo_wind                           = 1,     1,     1,
@@ -96,7 +97,7 @@
  ifsnow                              = 1,
  icloud                              = 1,
  surface_input_source                = 1,
- num_land_cat                        = 20,
+ num_land_cat                        = 21,
  num_soil_layers                     = 4,
  /
 
