@@ -71,6 +71,8 @@ RUN cp ${region}/namelist.input ${region}/namelist.input.template \
 FROM ${base_image}
 ARG region
 ENV region ${region}
+ARG wrf_version
+ENV wrf_version ${wrf_version}
 COPY --from=raspbuild /root/rasp/ $BASEDIR
 ENV PATH="${BASEDIR}/bin:${PATH}"
 

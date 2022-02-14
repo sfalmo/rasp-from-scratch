@@ -42,11 +42,8 @@ perl /root/rasp/bin/title2json.pl /root/rasp/${region}/OUT &> ${logDir}/title2js
 # Generate geotiffs from data files
 python3 /root/rasp/bin/rasp2geotiff.py /root/rasp/${region} &> ${logDir}/rasp2geotiff.out
 
-runSubdir="${region}"
-if [[ "$START_DAY" != "0" ]]
-then
-  runSubdir="${region}+${START_DAY}"
-fi
+datestamp=$(date +%Y-%m-%d -d "+${START_DAY} days")
+runSubdir="${region}_${datestamp}"
 targetOutDir="${outDir}/${runSubdir}"
 targetLogDir="${logDir}/${runSubdir}"
 mkdir -p ${targetOutDir}
@@ -75,11 +72,11 @@ then
   echo "${SSH_KEY}" > aufwinde_key
   chmod 0600 aufwinde_key
   # Always sync contents of log directory
-  rsync -e "ssh -i aufwinde_key -o StrictHostKeychecking=no" -rlt --delete-after ${targetLogDir} "${WEBSERVER_USER}@${WEBSERVER_HOST}:${WEBSERVER_RESULTSDIR}/LOG/"
+  rsync -e "ssh -i aufwinde_key -o StrictHostKeychecking=no" -rlt --delete-after ${targetLogDir} "${WEBSERVER_USER}@${WEBSERVER_HOST}:${WEBSERVER_RESULTSDIR}/LOG"
   if [[ "$(ls -A ${targetOutDir})" ]]
   then
     # If there is output, sync it. Otherwise, back off and be happy with the data that is already on the webserver
-    rsync -e "ssh -i aufwinde_key -o StrictHostKeychecking=no" -rlt --delete-after ${targetOutDir} "${WEBSERVER_USER}@${WEBSERVER_HOST}:${WEBSERVER_RESULTSDIR}/OUT/"
+    rsync -e "ssh -i aufwinde_key -o StrictHostKeychecking=no" -rlt --delete-after ${targetOutDir} "${WEBSERVER_USER}@${WEBSERVER_HOST}:${WEBSERVER_RESULTSDIR}/OUT"
   fi
 fi
 
