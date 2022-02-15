@@ -64,7 +64,7 @@ then
   if [[ "$(ls -A ${outDir})" ]]
   then
     # If there is output, sync it. Otherwise, back off and be happy with the data that is already on the webserver
-    rsync -e "ssh -i aufwinde_key -o StrictHostKeychecking=no" -rlt --delete-after --exclude='*.png' "${outDir}/" "${WEBSERVER_USER}@${WEBSERVER_HOST}:${remoteOutDir}"
+    rsync -e "ssh -i aufwinde_key -o StrictHostKeychecking=no" -rlt --delete-after "${outDir}/" "${WEBSERVER_USER}@${WEBSERVER_HOST}:${remoteOutDir}"
   fi
 fi
 
