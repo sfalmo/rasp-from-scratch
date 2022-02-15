@@ -1,12 +1,12 @@
-ARG base_image
-ARG wrf_image
-ARG wrf_version
-ARG region
+ARG BASE_IMAGE
+ARG WRF_IMAGE
+ARG WRF_VERSION
+ARG REGION
 
-FROM ${wrf_image}:${wrf_version} AS wrf
+FROM ${WRF_IMAGE}:${WRF_VERSION} AS wrf
 
-FROM ${base_image} AS raspbuild
-ARG region
+FROM ${BASE_IMAGE} AS raspbuild
+ARG REGION
 ENV TZ=Europe/Berlin \
   BASEDIR=/root/rasp
 COPY --from=wrf /root/rasp/ $BASEDIR
@@ -48,31 +48,31 @@ ENV PATH="${BASEDIR}/bin:${PATH}"
 COPY geog.tar.gz $BASEDIR
 
 # Set up region
-RUN mkdir ${region} \
-  && cp -r region.TEMPLATE/* ${region}/
+RUN mkdir ${REGION} \
+  && cp -r region.TEMPLATE/* ${REGION}/
 # Copy only the stuff we need for geogrid.exe
-COPY ${region}/namelist.wps ${region}/GEOGRID.TBL $BASEDIR/${region}/
-RUN cp ${region}/namelist.wps ${region}/namelist.wps.template
+COPY ${REGION}/namelist.wps ${REGION}/GEOGRID.TBL $BASEDIR/${REGION}/
+RUN cp ${REGION}/namelist.wps ${REGION}/namelist.wps.template
 
 # Extract geog data and run geogrid
 RUN tar xf geog.tar.gz \
-  && cd "$BASEDIR/${region}/" \
+  && cd "$BASEDIR/${REGION}/" \
   && geogrid.exe \
   && rm -rf $BASEDIR/geog $BASEDIR/geog.tar.gz \
   && rm -rf $BASEDIR/build \
   && rm -rf $BASEDIR/region.TEMPLATE
 
 # Do this afterwards, because we do not want to trigger geogrid.exe each time namelist.input is changed
-COPY ${region}/ $BASEDIR/${region}/
-RUN cp ${region}/namelist.input ${region}/namelist.input.template \
-  && mv $BASEDIR/${region}/rasp.region_data.ncl $BASEDIR/${region}/sitedata.ncl $BASEDIR/GM/
+COPY ${REGION}/ $BASEDIR/${REGION}/
+RUN cp ${REGION}/namelist.input ${REGION}/namelist.input.template \
+  && mv $BASEDIR/${REGION}/rasp.region_data.ncl $BASEDIR/${REGION}/sitedata.ncl $BASEDIR/GM/
 
 # --- Actual RASP production image ---
-FROM ${base_image}
-ARG region
-ENV region ${region}
-ARG wrf_version
-ENV wrf_version ${wrf_version}
+FROM ${BASE_IMAGE}
+ARG REGION
+ENV REGION ${REGION}
+ARG WRF_VERSION
+ENV WRF_VERSION ${WRF_VERSION}
 COPY --from=raspbuild /root/rasp/ $BASEDIR
 ENV PATH="${BASEDIR}/bin:${PATH}"
 
@@ -96,10 +96,10 @@ RUN (echo y;echo o conf prerequisites_policy follow;echo o conf commit) | cpan \
 COPY ncl_jack/WRFUserARW.ncl.patch $BASEDIR/GM/
 RUN patch /usr/lib/ncarg/nclscripts/wrf/WRFUserARW.ncl $BASEDIR/GM/WRFUserARW.ncl.patch
 
-VOLUME ["$BASEDIR/${region}/OUT", "$BASEDIR/${region}/LOG"]
+VOLUME ["$BASEDIR/${REGION}/OUT", "$BASEDIR/${REGION}/LOG"]
 
 # Set environment for interactive container shells
 RUN echo export BASEDIR=$BASEDIR >> /etc/bashrc \
   && echo export PATH+=:\$BASEDIR/bin >> /etc/bashrc
 
-CMD runRasp.sh ${region}
+CMD runRasp.sh ${REGION}

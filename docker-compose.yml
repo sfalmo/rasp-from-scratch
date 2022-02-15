@@ -1,31 +1,31 @@
 services:
   base:
-    image: ${base_image}
+    image: ${BASE_IMAGE}
     build:
       context: ./base
       dockerfile: Dockerfile
   wrf:
-    image: ${wrf_image}:${wrf_version}
+    image: ${WRF_IMAGE}:${WRF_VERSION}
     build:
       context: ./wrf
       dockerfile: Dockerfile
       args:
-        base_image: ${base_image}
-        wrf_version: ${wrf_version}
-        wps_version: ${wps_version}
+        BASE_IMAGE: ${BASE_IMAGE}
+        WRF_VERSION: ${WRF_VERSION}
+        WPS_VERSION: ${WPS_VERSION}
   rasp:
-    image: ${rasp_image}:WRF${wrf_version}_${region}
+    image: ${RASP_IMAGE}:WRF${WRF_VERSION}_${REGION}
     build:
       context: ./rasp
       dockerfile: Dockerfile
       args:
-        base_image: ${base_image}
-        wrf_image: ${wrf_image}
-        wrf_version: ${wrf_version}
-        region: ${region}
+        BASE_IMAGE: ${BASE_IMAGE}
+        WRF_IMAGE: ${WRF_IMAGE}
+        WRF_VERSION: ${WRF_VERSION}
+        REGION: ${REGION}
     volumes:
-      - ../results/OUT:/root/rasp/${region}/OUT
-      - ../results/LOG:/root/rasp/${region}/LOG
+      - ../results/OUT:/root/rasp/${REGION}/OUT
+      - ../results/LOG:/root/rasp/${REGION}/LOG
     environment:
       - START_DAY=${START_DAY:-0}
       - OFFSET_HOUR=${OFFSET_HOUR:-0}

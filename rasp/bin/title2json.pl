@@ -17,10 +17,16 @@ sub padZero {
 }
 
 foreach my $file (@files) {
-    $str = `awk 'FNR==4' ${file}`;
     if ($file =~ m/(.*?)\.data/) {
         $filenameBase = $1;
+	my ($year, $month, $day, $weekday, $validLocal, $timezone, $validZulu, $fcstTime, $initTime, $fcstZulu, $parameter, $unit, $mult, $min, $max);
 
+        $str = `awk 'FNR==2' ${file}`;
+        if ($str =~ m/(.*?) Valid (.*?) ~Z75~\((.*)\)~Z~ (.*?) ~Z75~\[(\d*)hrFcst\@(\d*?)z\]~Z~/) {
+	    $fcstZulu = $6;
+	}
+
+        $str = `awk 'FNR==4' ${file}`;
         if ($str =~ m/\ADay= (\d*?) (\d*?) (\d*?) (.*?) ValidLST= (\d*?) (.*?) ValidZ= (.*?) Fcst= (.*?) Init= (.*?) Param= (.*?) Unit= (.*?) Mult= (.*?) Min= (.*?) Max= (.*?)$/) {
             $year = $1;
             $month = padZero($2);
@@ -36,11 +42,10 @@ foreach my $file (@files) {
             $mult = $12;
             $min = $13;
             $max = $14;
-
-            my %array = (year => $year, month => $month, day => $day, weekday => $weekday, validLocal => $validLocal, timezone => $timezone, validZulu => $validZulu, fcstTime => $fcstTime, initTime => $initTime, parameter => $parameter, unit => $unit, mult => $mult, min => $min, max => $max);
-            open(FILE, '>', "${filenameBase}.title.json") or die $!;
-            print FILE encode_json \%array;
-            close(FILE);
         }
+        my %array = (year => $year, month => $month, day => $day, weekday => $weekday, validLocal => $validLocal, timezone => $timezone, validZulu => $validZulu, fcstTime => $fcstTime, initTime => $initTime, fcstZulu => $fcstZulu, parameter => $parameter, unit => $unit, mult => $mult, min => $min, max => $max);
+        open(FILE, '>', "${filenameBase}.title.json") or die $!;
+        print FILE encode_json \%array;
+        close(FILE);
     }
 }

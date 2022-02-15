@@ -1,10 +1,10 @@
-ARG wrf_version
-ARG wps_version
-ARG base_image
+ARG WRF_VERSION
+ARG WPS_VERSION
+ARG BASE_IMAGE
 
-FROM ${base_image}
-ARG wrf_version
-ARG wps_version
+FROM ${BASE_IMAGE}
+ARG WRF_VERSION
+ARG WPS_VERSION
 
 # required packages
 RUN dnf update -y && dnf install -y \
@@ -24,8 +24,8 @@ ENV CC=gcc \
   NETCDF_classic=1
 
 RUN mkdir build && cd build \
-  && git clone --branch ${wrf_version} --depth 1 https://github.com/wrf-model/WRF.git \
-  && git clone --branch ${wps_version} --depth 1 https://github.com/wrf-model/WPS.git
+  && git clone --branch ${WRF_VERSION} --depth 1 https://github.com/wrf-model/WRF.git \
+  && git clone --branch ${WPS_VERSION} --depth 1 https://github.com/wrf-model/WPS.git
 
 COPY Registry.EM_COMMON.patch configure.wrf.patch $BASEDIR/build/WRF/
 RUN cd $BASEDIR/build/WRF \

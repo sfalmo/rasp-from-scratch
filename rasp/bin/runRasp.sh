@@ -7,12 +7,12 @@ if [ $# -ne 1 ] ; then
     echo $usage;
     exit 1;
 fi
-region=$1
+REGION=$1
 if [ -z "${START_DAY}" ] ; then
     START_DAY=0;
 fi
 
-regionDir="/root/rasp/${region}"
+regionDir="/root/rasp/${REGION}"
 outDir="${regionDir}/OUT"
 logDir="${regionDir}/LOG"
 
@@ -24,35 +24,34 @@ rm -rf ${outDir}/*
 rm -rf ${logDir}/*
 rm -rf ${regionDir}/wrfout_d0*
 
-startDate="$(date +%Y%m%d)";
-startTime="$(date +%H%M)";
+runDate="$(date +%Y%m%d)";
+runTime="$(date +%H%M)";
 
-echo "Running runGM on area ${region}, startDay = ${START_DAY} and hour offset = ${OFFSET_HOUR}"
-runGM ${region}
+echo "Running runGM on area ${REGION}, startDay = ${START_DAY} and hour offset = ${OFFSET_HOUR}"
+runGM ${REGION}
 
 #Generate the meteogram images
 echo "Running meteogram on $(date)"
 cp /root/rasp/logo.svg ${regionDir}/OUT/logo.svg
-ncl /root/rasp/GM/meteogram.ncl DOMAIN=\"${region}\" SITEDATA=\"/root/rasp/GM/sitedata.ncl\" &> ${logDir}/meteogram.out
+ncl /root/rasp/GM/meteogram.ncl DOMAIN=\"${REGION}\" SITEDATA=\"/root/rasp/GM/sitedata.ncl\" &> ${logDir}/meteogram.out
 
 # Generate title JSONs from data files
-perl /root/rasp/bin/title2json.pl /root/rasp/${region}/OUT &> ${logDir}/title2json.out
+perl /root/rasp/bin/title2json.pl /root/rasp/${REGION}/OUT &> ${logDir}/title2json.out
 
 # Generate geotiffs from data files
-python3 /root/rasp/bin/rasp2geotiff.py /root/rasp/${region} &> ${logDir}/rasp2geotiff.out
+python3 /root/rasp/bin/rasp2geotiff.py /root/rasp/${REGION} &> ${logDir}/rasp2geotiff.out
 
 # Move some additional log files
 mv ${regionDir}/wrf.out ${logDir}
 mv ${regionDir}/metgrid.log ${logDir}
 mv ${regionDir}/ungrib.log ${logDir}
 
-echo "Started running rasp at ${startDate} ${startTime}, ended at $(date)"
+echo "Started running rasp at ${runDate} ${runTime}, ended at $(date)"
 
 if [[ "${WEBSERVER_SEND}" == "1" ]]
 then
-  datestamp=$(date +%Y-%m-%d -d "+${START_DAY} days")
-  remoteLogDir="${WEBSERVER_RESULTSDIR}/LOG/${REGION}_${datestamp}"
-  remoteOutDir="${WEBSERVER_RESULTSDIR}/OUT/${REGION}_${datestamp}"
+  remoteLogDir="${WEBSERVER_RESULTSDIR}/LOG/${REGION}/${runDate}/${START_DAY}"
+  remoteOutDir="${WEBSERVER_RESULTSDIR}/OUT/${REGION}/${runDate}/${START_DAY}"
   echo "Sending logs to ${WEBSERVER_USER}@${WEBSERVER_HOST}:${remoteLogDir} and results to ${WEBSERVER_USER}@${WEBSERVER_HOST}:${remoteOutDir}"
   # Get ssh key from environment
   echo "${SSH_KEY}" > aufwinde_key
