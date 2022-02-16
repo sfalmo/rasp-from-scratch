@@ -24,8 +24,8 @@ rm -rf ${outDir}/*
 rm -rf ${logDir}/*
 rm -rf ${regionDir}/wrfout_d0*
 
-runDate="$(date +%Y%m%d)";
-runTime="$(date +%H%M)";
+runDate="$(date +%Y-%m-%d)";
+runTime="$(date +%H-%M)";
 
 echo "Running runGM on area ${REGION}, startDay = ${START_DAY} and hour offset = ${OFFSET_HOUR}"
 runGM ${REGION}
@@ -46,7 +46,7 @@ mv ${regionDir}/wrf.out ${logDir}
 mv ${regionDir}/metgrid.log ${logDir}
 mv ${regionDir}/ungrib.log ${logDir}
 
-echo "Started running rasp at ${runDate} ${runTime}, ended at $(date)"
+echo "Started running rasp at ${runDate}_${runTime}, ended at $(date +%Y-%m-%d_%H-%M)"
 
 if [[ "${WEBSERVER_SEND}" == "1" ]]
 then

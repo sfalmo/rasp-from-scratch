@@ -14,55 +14,41 @@ COPY --from=wrf /root/rasp/ $BASEDIR
 ENV WRF_DIR="${BASEDIR}/build/WRF" \
   WPS_DIR="${BASEDIR}/build/WPS"
 
-# Copy WRF executables and scripts to rasp bin folder
-RUN mkdir $BASEDIR/bin \
+# Copy WRF executables and scripts to rasp bin folder and set up region folder with WRF tables
+RUN mkdir -p $BASEDIR/bin $BASEDIR/${REGION}/GRIB $BASEDIR/${REGION}/LOG $BASEDIR/${REGION}/OUT \
+  && ln -s $BASEDIR/GM $BASEDIR/${REGION}/GM \
   && for exe in "$WRF_DIR/run/*.exe"; do cp -L $exe $BASEDIR/bin/; done \
   && cp $WPS_DIR/link_grib.csh $BASEDIR/bin/ \
   && for exe in "$WPS_DIR/util/*.exe"; do cp -L $exe $BASEDIR/bin/; done \
   && for exe in "$WPS_DIR/ungrib/*.exe"; do cp -L $exe $BASEDIR/bin/; done \
   && for exe in "$WPS_DIR/geogrid/*.exe"; do cp -L $exe $BASEDIR/bin/; done \
-  && for exe in "$WPS_DIR/metgrid/*.exe"; do cp -L $exe $BASEDIR/bin/; done
+  && for exe in "$WPS_DIR/metgrid/*.exe"; do cp -L $exe $BASEDIR/bin/; done \
+  && cp $WRF_DIR/run/* $BASEDIR/${REGION}/ && rm $BASEDIR/${REGION}/*.exe \
+  && cp $WPS_DIR/ungrib/Variable_Tables/* $BASEDIR/${REGION}/ \
+  && cp $WPS_DIR/geogrid/GEOGRID* $BASEDIR/${REGION}/ \
+  && cp $WPS_DIR/metgrid/METGRID* $WPS_DIR/metgrid/gribmap.txt $BASEDIR/${REGION}/ \
+  && rm -rf $BASEDIR/build
 
-# Set up region template with run tables from WRF
-RUN mkdir $BASEDIR/region.TEMPLATE \
-  && mkdir $BASEDIR/region.TEMPLATE/GRIB \
-  && mkdir $BASEDIR/region.TEMPLATE/LOG \
-  && mkdir $BASEDIR/region.TEMPLATE/OUT \
-  && ln -s $BASEDIR/GM $BASEDIR/region.TEMPLATE/GM \
-  && cp $WRF_DIR/run/* $BASEDIR/region.TEMPLATE/ && rm $BASEDIR/region.TEMPLATE/*.exe \
-  && cp $WPS_DIR/ungrib/Variable_Tables/* $BASEDIR/region.TEMPLATE/ \
-  && cp $WPS_DIR/geogrid/GEOGRID* $BASEDIR/region.TEMPLATE/ \
-  && cp $WPS_DIR/metgrid/METGRID* $WPS_DIR/metgrid/gribmap.txt $BASEDIR/region.TEMPLATE/
+ENV PATH="${BASEDIR}/bin:${PATH}"
 
-# Add rasp assets (WRF glue scripts, plot scripts, DrJack library, custom stuff)
+# Copy only the stuff we need for geogrid
+COPY geog.tar.gz $BASEDIR
+COPY ${REGION}/namelist.wps ${REGION}/GEOGRID.TBL $BASEDIR/${REGION}/
+# Extract geog data and run geogrid. Do this all in one take to keep the image size small
+RUN tar xf geog.tar.gz \
+  && cd "$BASEDIR/${REGION}/" \
+  && cp namelist.wps namelist.wps.template \
+  && geogrid.exe \
+  && rm -rf $BASEDIR/geog $BASEDIR/geog.tar.gz
+
+# Add rasp assets (WRF glue scripts, plot scripts, DrJack library, custom stuff) and the rest of the region folder
+# Do this afterwards so we do not trigger the copying and extraction of geog data each time we change scripts or namelist.input settings
 RUN mkdir -p $BASEDIR/GM/LIB $BASEDIR/lib
 COPY bin/ $BASEDIR/bin/
 COPY GM/ $BASEDIR/GM/
 COPY logo.svg $BASEDIR/
 COPY ncl_jack/ncl_jack_fortran.so $BASEDIR/GM/LIB/
 COPY ncl_jack/libncl_jack.nocuda.so ncl_jack/libwrf_user.nocuda.so $BASEDIR/lib/
-
-ENV PATH="${BASEDIR}/bin:${PATH}"
-
-# Copy geog data
-COPY geog.tar.gz $BASEDIR
-
-# Set up region
-RUN mkdir ${REGION} \
-  && cp -r region.TEMPLATE/* ${REGION}/
-# Copy only the stuff we need for geogrid.exe
-COPY ${REGION}/namelist.wps ${REGION}/GEOGRID.TBL $BASEDIR/${REGION}/
-RUN cp ${REGION}/namelist.wps ${REGION}/namelist.wps.template
-
-# Extract geog data and run geogrid
-RUN tar xf geog.tar.gz \
-  && cd "$BASEDIR/${REGION}/" \
-  && geogrid.exe \
-  && rm -rf $BASEDIR/geog $BASEDIR/geog.tar.gz \
-  && rm -rf $BASEDIR/build \
-  && rm -rf $BASEDIR/region.TEMPLATE
-
-# Do this afterwards, because we do not want to trigger geogrid.exe each time namelist.input is changed
 COPY ${REGION}/ $BASEDIR/${REGION}/
 RUN cp ${REGION}/namelist.input ${REGION}/namelist.input.template \
   && mv $BASEDIR/${REGION}/rasp.region_data.ncl $BASEDIR/${REGION}/sitedata.ncl $BASEDIR/GM/

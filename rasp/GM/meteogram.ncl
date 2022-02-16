@@ -2,7 +2,7 @@
 ; Add your meteogram locations to the sitedata.ncl file, for example 1,Terlet,d2,5.9233,52.0567,
 
 meteogram_version = "20210615"
-wrf_version = getenv("wrf_version")
+wrf_version = getenv("WRF_VERSION")
 
 BASEDIR=getenv("BASEDIR")
 NCARG_ROOT=getenv("NCARG_ROOT")  
