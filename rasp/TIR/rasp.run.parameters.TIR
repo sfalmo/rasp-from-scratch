@@ -35,12 +35,11 @@ $LOCALTIME_ADJ{'TIR'} = substr `date +%z`,0,3;
 
 # SET GRIB FILE PROCESSING
 # GRIBFILES_PER_FORECAST_PERIOD IS NUMBER OF GRIB FILES PROCESSED AT SAME TIME
-#12_hr:
-$GRIBFILES_PER_FORECAST_PERIOD{'TIR'} = 5 ;
+$GRIBFILES_PER_FORECAST_PERIOD{'TIR'} = 6 ;
 # BLIPMAPFILEDOLIST LISTS ALL GRIB FILES NEEDED
 
 # SET DOMAIN PARAMETERS FOR STAGE1 [NON-WINDOW] ITERATION
-$FORECAST_PERIODHRS{'TIR'}[0]              = 12;  # used only by initialization programs
+$FORECAST_PERIODHRS{'TIR'}[0]              = 15;  # used only by initialization programs
 $BOUNDARY_UPDATE_PERIODHRS{'TIR'}[0]       = 3;   # used only by initialization programs
 $NDOWN_BOUNDARY_UPDATE_PERIODHRS{'TIR'}[0] = 0;   # should always be 0 for non-windowed case
 
@@ -65,14 +64,14 @@ if(defined $ENV{'OFFSET_HOUR'}) {
 # for non-threaded output times to plot (depends upon history output length and increment)
 $ISDST = ((localtime)[8]);
 if ($ISDST) {
-    $hourBegin = 6;
-    $DOMAIN1_STARTHH{'TIR'}[0]         = '06';        # must have grib file available for this time
+    $hourBegin = 3;
+    $DOMAIN1_STARTHH{'TIR'}[0]         = '03';        # must have grib file available for this time
     $DOMAIN1_ENDHH{'TIR'}[0]           = '18';
     @{$PLOT_HHMMLIST{'TIR'}[0]} =       ( '0600','0700','0800','0900','1000','1100','1200','1300','1400','1500','1600','1700','1800');
     @{$SAVE_PLOT_HHMMLIST{'TIR'}[0]} =  ( '0600','0700','0800','0900','1000','1100','1200','1300','1400','1500','1600','1700','1800');
 } else {
-    $hourBegin = 7;
-    $DOMAIN1_STARTHH{'TIR'}[0]         = '07';        # must have grib file available for this time
+    $hourBegin = 4;
+    $DOMAIN1_STARTHH{'TIR'}[0]         = '04';        # must have grib file available for this time
     $DOMAIN1_ENDHH{'TIR'}[0]           = '19';
     @{$PLOT_HHMMLIST{'TIR'}[0]} =       ( '0700','0800','0900','1000','1100','1200','1300','1400','1500','1600','1700','1800','1900');
     @{$SAVE_PLOT_HHMMLIST{'TIR'}[0]} =  ( '0700','0800','0900','1000','1100','1200','1300','1400','1500','1600','1700','1800','1900');
@@ -82,7 +81,8 @@ if ($ISDST) {
                                   sprintf("%dZ+%d",$offset,$hourBegin+3),
                                   sprintf("%dZ+%d",$offset,$hourBegin+6),
                                   sprintf("%dZ+%d",$offset,$hourBegin+9),
-                                  sprintf("%dZ+%d",$offset,$hourBegin+12) ],);
+                                  sprintf("%dZ+%d",$offset,$hourBegin+12),
+                                  sprintf("%dZ+%d",$offset,$hourBegin+15) ],);
 
 ##############  END OF REGION DEPENDENT PARAMETERS  ##############
 ##################################################################

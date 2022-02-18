@@ -10,6 +10,7 @@ NCARG_ROOT=getenv("NCARG_ROOT")
 show_pfd = 0
 non_metric = 0
 use_paraglider = 0
+use_only_hours = 1
 
 if (.not.isvar("DOMAIN")) then
    print("Usage: meteogram.ncl DOMAIN=domainname SITEDATA=sitedata.ncl [ptop=nn] [rhcut = nn ] [show_[xxx]=[0|1]]")
@@ -668,7 +669,7 @@ do i=0,dims(0)-1
    if ( lst_string(i).eq."09:00") then
       start_time_index = i - start_time_margin
    end if
-   if ( lst_string(i).eq."18:30") then
+   if ( lst_string(i).eq."19:00") then
       stop_time_index = i + start_time_margin
    end if
 end do
