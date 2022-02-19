@@ -1,18 +1,37 @@
 ARG BASE_IMAGE
 ARG WRF_IMAGE
 ARG WRF_VERSION
+ARG WRF_MARCH_BUILD
+ARG WRF_MARCH_PROD
 ARG REGION
 
-FROM ${WRF_IMAGE}:${WRF_VERSION} AS wrf
+# Cloud computing and storage capacity is expensive.
+# So, to improve performance, WRF is compiled with the -march option, which lets the compiler optimize for a specific CPU instruction set.
+# Also, to reduce runtime and container size, we run geogrid.exe already once during build and then remove the huge geog data from the container.
+# Now there's a problem: what if the build machine's (e.g. your personal laptop's) instruction set differs from the one of the RASP run server (e.g. a VM with the latest CPUs in the cloud)?
+# WRF (or at least WPS) must be able to run on both (geogrid.exe during build, rest in every run).
+# No, it is not possible (or at least not easy) to build only WPS or even geogrid.exe for a different architecture.
+# Yes, you must build WRF before building WPS (it uses some i/o functions of the WRF library).
+# This leaves us with no choice but to build WRF twice - once for the build machine and once for the run server.
+# Note that this only applies if those two differ; if you build and run RASP on the same machine, only one native compile of WRF is needed.
+FROM ${WRF_IMAGE}:${WRF_VERSION}-${WRF_MARCH_BUILD} AS wrf_build
+FROM ${WRF_IMAGE}:${WRF_VERSION}-${WRF_MARCH_PROD} AS wrf_prod
 
 FROM ${BASE_IMAGE} AS raspbuild
 ARG REGION
 ENV TZ=Europe/Berlin \
   BASEDIR=/root/rasp
-COPY --from=wrf /root/rasp/ $BASEDIR
 
-ENV WRF_DIR="${BASEDIR}/build/WRF" \
-  WPS_DIR="${BASEDIR}/build/WPS"
+COPY --from=wrf_build /root/rasp/ $BASEDIR
+RUN mkdir $BASEDIR/build/build \
+  && mv $BASEDIR/build/WRF $BASEDIR/build/WPS $BASEDIR/build/build/
+
+COPY --from=wrf_prod /root/rasp/ $BASEDIR
+RUN mkdir $BASEDIR/build/prod \
+  && mv $BASEDIR/build/WRF $BASEDIR/build/WPS $BASEDIR/build/prod/
+
+ENV WRF_DIR="${BASEDIR}/build/prod/WRF" \
+  WPS_DIR="${BASEDIR}/build/prod/WPS"
 
 # Copy WRF executables and scripts to rasp bin folder and set up region folder with WRF tables
 RUN mkdir -p $BASEDIR/bin $BASEDIR/${REGION}/GRIB $BASEDIR/${REGION}/LOG $BASEDIR/${REGION}/OUT \
@@ -21,8 +40,8 @@ RUN mkdir -p $BASEDIR/bin $BASEDIR/${REGION}/GRIB $BASEDIR/${REGION}/LOG $BASEDI
   && cp $WPS_DIR/link_grib.csh $BASEDIR/bin/ \
   && for exe in "$WPS_DIR/util/*.exe"; do cp -L $exe $BASEDIR/bin/; done \
   && for exe in "$WPS_DIR/ungrib/*.exe"; do cp -L $exe $BASEDIR/bin/; done \
-  && for exe in "$WPS_DIR/geogrid/*.exe"; do cp -L $exe $BASEDIR/bin/; done \
   && for exe in "$WPS_DIR/metgrid/*.exe"; do cp -L $exe $BASEDIR/bin/; done \
+  && for exe in "$BASEDIR/build/build/WPS/geogrid/*.exe"; do cp -L $exe $BASEDIR/bin/; done \
   && cp $WRF_DIR/run/* $BASEDIR/${REGION}/ && rm $BASEDIR/${REGION}/*.exe \
   && cp $WPS_DIR/ungrib/Variable_Tables/* $BASEDIR/${REGION}/ \
   && cp $WPS_DIR/geogrid/GEOGRID* $BASEDIR/${REGION}/ \

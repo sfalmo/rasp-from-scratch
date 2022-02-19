@@ -4,8 +4,8 @@ services:
     build:
       context: ./base
       dockerfile: Dockerfile
-  wrf:
-    image: ${WRF_IMAGE}:${WRF_VERSION}
+  wrf_build:
+    image: ${WRF_IMAGE}:${WRF_VERSION}-${WRF_MARCH_BUILD}
     build:
       context: ./wrf
       dockerfile: Dockerfile
@@ -13,6 +13,17 @@ services:
         BASE_IMAGE: ${BASE_IMAGE}
         WRF_VERSION: ${WRF_VERSION}
         WPS_VERSION: ${WPS_VERSION}
+        WRF_MARCH: ${WRF_MARCH_BUILD}
+  wrf_prod:
+    image: ${WRF_IMAGE}:${WRF_VERSION}-${WRF_MARCH_PROD}
+    build:
+      context: ./wrf
+      dockerfile: Dockerfile
+      args:
+        BASE_IMAGE: ${BASE_IMAGE}
+        WRF_VERSION: ${WRF_VERSION}
+        WPS_VERSION: ${WPS_VERSION}
+        WRF_MARCH: ${WRF_MARCH_PROD}
   rasp:
     image: ${RASP_IMAGE}:WRF${WRF_VERSION}_${REGION}
     build:
@@ -22,6 +33,8 @@ services:
         BASE_IMAGE: ${BASE_IMAGE}
         WRF_IMAGE: ${WRF_IMAGE}
         WRF_VERSION: ${WRF_VERSION}
+        WRF_MARCH_BUILD: ${WRF_MARCH_BUILD}
+        WRF_MARCH_PROD: ${WRF_MARCH_PROD}
         REGION: ${REGION}
     volumes:
       - ../results/OUT:/root/rasp/${REGION}/OUT
