@@ -531,7 +531,7 @@ end if
 ; Data ingest from wrfout files and digest
 
 if ( use_only_hours.eq.1 ) then
-   filecommand1= "ls $BASEDIR/"+region+"/wrfout_d02_* | egrep -v ':30|:03:|04:|05:|06:|17:|18:'"
+   filecommand1= "ls $BASEDIR/"+region+"/wrfout_d02_* | egrep -v ':30|:03:|04:|05:'"
 else
    filecommand1= "ls $BASEDIR/"+region+"/wrfout_d02_* | egrep -v ':03:|04:|05:'"
 end if

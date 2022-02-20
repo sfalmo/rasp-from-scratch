@@ -25,7 +25,7 @@ services:
         WPS_VERSION: ${WPS_VERSION}
         WRF_MARCH: ${WRF_MARCH_PROD}
   rasp:
-    image: ${RASP_IMAGE}:WRF${WRF_VERSION}_${REGION}
+    image: ${RASP_IMAGE}:WRF${WRF_VERSION}-${WRF_MARCH_PROD}_${REGION}
     build:
       context: ./rasp
       dockerfile: Dockerfile
