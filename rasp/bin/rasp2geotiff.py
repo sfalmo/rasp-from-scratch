@@ -1,7 +1,7 @@
 import re
 import glob
 import numpy as np
-import gdal, osr
+from osgeo import gdal, osr
 import sys
 
 def getLatLngBoundsFromWRF(wrfoutfile):

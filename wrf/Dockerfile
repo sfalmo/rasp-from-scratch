@@ -32,8 +32,9 @@ RUN cd $BASEDIR/build/WRF \
   && patch Registry/Registry.EM_COMMON Registry.EM_COMMON.patch \
   && printf "33\n1\n" | ./configure \
   && echo "Patching config with -march=${WRF_MARCH}" \
-  && sed -i "s/^\(CFLAGS_LOCAL\s*=\s*\).*/\1-w -O3 -march=${WRF_MARCH}/" configure.wrf \
-  && sed -i "s/^\(FCOPTIM\s*=\s*\).*/\1-O3 -ftree-vectorize -funroll-loops -march=${WRF_MARCH}/" configure.wrf \
+  && sed -i "s/^\(CFLAGS_LOCAL\s*=\s*\).*/\1-w -O3 -c -ftree-vectorize -funroll-loops -ffast-math -flto -march=${WRF_MARCH}/" configure.wrf \
+  && sed -i "s/^\(LDFLAGS_LOCAL\s*=\s*\).*/\1-O3 -ftree-vectorize -funroll-loops -ffast-math -flto -march=${WRF_MARCH}/" configure.wrf \
+  && sed -i "s/^\(FCOPTIM\s*=\s*\).*/\1-O3 -ftree-vectorize -funroll-loops -ffast-math -flto -march=${WRF_MARCH}/" configure.wrf \
   && sed -i 's!-L$(WRF_SRC_ROOT_DIR)/external/io_netcdf -lwrfio_nf -L/usr/lib!-L$(WRF_SRC_ROOT_DIR)/external/io_netcdf -lwrfio_nf -L/usr/lib -lnetcdf -lnetcdff!' configure.wrf \
   && ./compile -j 8 em_real
 

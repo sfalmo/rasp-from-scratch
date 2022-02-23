@@ -91,7 +91,7 @@ RUN dnf update -y && dnf install -y \
   sendmail procmail mailx \
   ImageMagick \
   perl-CPAN perl-JSON \
-  python3 gdal-python3 \
+  python3 python3-gdal \
   openssh-clients rsync \
   && dnf clean all
 
