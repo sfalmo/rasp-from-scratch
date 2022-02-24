@@ -33,7 +33,7 @@ def getWRFSpatialReference(trueLat1, trueLat2, refLng, centerLat):
     wrf_srs.ImportFromProj4("+proj=lcc +lat_1={trueLat1} +lat_2={trueLat2} +lon_0={refLng} +lat_0={centerLat} +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs".format(trueLat1=trueLat1, trueLat2=trueLat2, refLng=refLng, centerLat=centerLat))
     return wrf_srs
 
-def getGeoTransform(wrf_srs, bounds, dataDim):
+def getGeoTransform(wrf_srs, bounds, dx, dy):
     srs_out = osr.SpatialReference()
     if hasattr(osr, 'OAMS_TRADITIONAL_GIS_ORDER'):
         srs_out.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
@@ -41,9 +41,7 @@ def getGeoTransform(wrf_srs, bounds, dataDim):
     transform = osr.CoordinateTransformation(srs_out, wrf_srs)
 
     ll_u, lr_u, ll_v, ul_v = [transform.TransformPoint(float(i[0]), float(i[1])) for i in bounds]
-    dx = (lr_u[0] - ll_u[0]) / dataDim[0]
-    dy = (ul_v[1] - ll_v[1]) / dataDim[1]
-    gt = (ll_u[0], dx, 0, -ll_v[1], 0, -dy)
+    gt = (ll_u[0], dx, 0, -ll_v[1], 0, dy)
     return gt
 
 def writeGeoTIFF(filename, data, wrf_srs, gt):
@@ -76,8 +74,8 @@ for datafile in datafiles:
         data_raw = d.readlines()
 
     proj_raw = re.search(r'Proj= (.*?)$', gridinfo_raw).group(1)
-    projName, dX, dY, trueLat1, trueLat2, refLng, centerLat, centerLng = proj_raw.split()
-    dX, dY, trueLat1, trueLat2, refLng, centerLat, centerLng = [float(i) for i in [dX, dY, trueLat1, trueLat2, refLng, centerLat, centerLng]]
+    projName, dx, dy, trueLat1, trueLat2, refLng, centerLat, centerLng = proj_raw.split()
+    dx, dy, trueLat1, trueLat2, refLng, centerLat, centerLng = [float(i) for i in [dx, dy, trueLat1, trueLat2, refLng, centerLat, centerLng]]
 
     mult = re.search(r'Mult= (.*?) ', paraminfo_raw).group(1)
     data = np.loadtxt(data_raw)
@@ -86,7 +84,7 @@ for datafile in datafiles:
         data /= mult
 
     wrf_srs = getWRFSpatialReference(trueLat1, trueLat2, refLng, centerLat)
-    gt = getGeoTransform(wrf_srs, bounds, data.shape)
+    gt = getGeoTransform(wrf_srs, bounds, dx, dy)
     writeGeoTIFF(datafile+'.tiff', data, wrf_srs, gt)
 
 
