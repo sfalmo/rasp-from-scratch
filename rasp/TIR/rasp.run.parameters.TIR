@@ -77,6 +77,8 @@ if ($ISDST) {
     @{$SAVE_PLOT_HHMMLIST{'TIR'}[0]} =  ( '0700','0800','0900','1000','1100','1200','1300','1400','1500','1600','1700','1800','1900');
 }
 
+$hourBegin += 24*$day - $offset;
+
 %GRIBFILE_DOLIST = ( 'TIR'   => [ sprintf("%dZ+%d",$offset,$hourBegin),
                                   sprintf("%dZ+%d",$offset,$hourBegin+3),
                                   sprintf("%dZ+%d",$offset,$hourBegin+6),
