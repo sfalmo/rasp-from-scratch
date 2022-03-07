@@ -46,12 +46,12 @@ def getGeoTransform(wrf_srs, bounds, dx, dy):
 
 def writeGeoTIFF(filename, data, wrf_srs, gt):
     driver = gdal.GetDriverByName("MEM")
-    griddata = driver.Create("temp", data.shape[0], data.shape[1], 1, gdal.GDT_Float32)
+    griddata = driver.Create("temp", data.shape[0], data.shape[1], 1, gdal.GDT_Int32)
     griddata.SetGeoTransform(gt)
     griddata.SetProjection(wrf_srs.ExportToWkt())
     griddata.GetRasterBand(1).WriteArray(data)
     griddata.GetRasterBand(1).SetNoDataValue(-999999)
-    warp = gdal.Warp(filename, griddata, dstSRS='EPSG:4326', format='GTiff', resampleAlg='cubicspline')
+    warp = gdal.Warp(filename, griddata, dstSRS='EPSG:3857', format='GTiff', resampleAlg='cubicspline', xRes=abs(gt[1]), yRes=abs(gt[-1]), creationOptions=['COMPRESS=DEFLATE', 'PREDICTOR=2'])
     warp = None
 
 
@@ -77,14 +77,11 @@ for datafile in datafiles:
     projName, dx, dy, trueLat1, trueLat2, refLng, centerLat, centerLng = proj_raw.split()
     dx, dy, trueLat1, trueLat2, refLng, centerLat, centerLng = [float(i) for i in [dx, dy, trueLat1, trueLat2, refLng, centerLat, centerLng]]
 
-    mult = re.search(r'Mult= (.*?) ', paraminfo_raw).group(1)
-    data = np.loadtxt(data_raw)
-    if mult != '1': # Better not introduce floating point errors
-        mult = float(mult)
-        data /= mult
-
+    try:
+        data = np.loadtxt(data_raw, dtype=int)
+    except:
+        data = np.around(np.loadtxt(data_raw)).astype(int)
     wrf_srs = getWRFSpatialReference(trueLat1, trueLat2, refLng, centerLat)
     gt = getGeoTransform(wrf_srs, bounds, dx, dy)
     writeGeoTIFF(datafile+'.tiff', data, wrf_srs, gt)
-
 
