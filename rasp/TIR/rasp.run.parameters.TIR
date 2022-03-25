@@ -48,7 +48,6 @@ $DOMAIN1_TIMESTEP{'TIR'}[0]        = 180;
 $DOMAIN2_START_DELTAMINS{'TIR'}[0] = 0;           # if non-zero, must set namelist.template INPUT_FROM_FILE=false
 $DOMAIN2_END_DELTAMINS{'TIR'}[0]   = 0;           # relative to domain1
 
-# SET BLIPMAP IMAGE SIZES  - 1st,2nd value for 1st,2nd domain - blank=NOplot
 @{$PLOT_IMAGE_SIZE{'TIR'}[0]} = ( '', '1600x1600' );
 
 $day = 0;
@@ -60,9 +59,7 @@ if(defined $ENV{'OFFSET_HOUR'}) {
     $offset = int($ENV{'OFFSET_HOUR'});
 }
 
-# SET HISTORY HOUR FOR IMAGES PLOTTED WHEN $PLOT_IMAGE_SIZE FOR THAT DOMAIN NOT BLANK
-# for non-threaded output times to plot (depends upon history output length and increment)
-$ISDST = ((localtime)[8]);
+$ISDST = ((localtime(time + $day*24*60*60))[8]); # Determine if the simulation date has DST
 if ($ISDST) {
     $hourBegin = 3;
     $DOMAIN1_STARTHH{'TIR'}[0]         = '03';        # must have grib file available for this time

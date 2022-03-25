@@ -50,27 +50,34 @@ echo "Started running rasp at ${runDate}_${runTime}, ended at $(date +%Y-%m-%d_%
 
 if [[ "${WEBSERVER_SEND}" == "1" ]]
 then
-  remoteLogDir="${WEBSERVER_RESULTSDIR}/LOG/${REGION}/${runDate}/${START_DAY}"
-  remoteOutDir="${WEBSERVER_RESULTSDIR}/OUT/${REGION}/${runDate}/${START_DAY}"
-  echo "Sending logs to ${WEBSERVER_USER}@${WEBSERVER_HOST}:${remoteLogDir} and results to ${WEBSERVER_USER}@${WEBSERVER_HOST}:${remoteOutDir}"
-  # Get ssh key from environment
-  echo "${SSH_KEY}" > aufwinde_key
-  chmod 0600 aufwinde_key
-  # Create directory on webserver
-  ssh -i aufwinde_key -o StrictHostKeychecking=no "${WEBSERVER_USER}@${WEBSERVER_HOST}" "mkdir -p ${remoteLogDir}"
-  ssh -i aufwinde_key -o StrictHostKeychecking=no "${WEBSERVER_USER}@${WEBSERVER_HOST}" "mkdir -p ${remoteOutDir}"
-  # Always sync contents of log directory
-  rsync -e "ssh -i aufwinde_key -o StrictHostKeychecking=no" -rlt --delete-after "${logDir}/" "${WEBSERVER_USER}@${WEBSERVER_HOST}:${remoteLogDir}"
-  if [[ "$(ls -A ${outDir})" ]]
-  then
-    # If there is output, sync it. Otherwise, back off and be happy with the data that is already on the webserver
-    rsync -e "ssh -i aufwinde_key -o StrictHostKeychecking=no" -rlt --delete-after "${outDir}/" "${WEBSERVER_USER}@${WEBSERVER_HOST}:${remoteOutDir}"
-  fi
+    remoteLogDir="${WEBSERVER_RESULTSDIR}/LOG/${REGION}/${runDate}/${START_DAY}"
+    remoteOutDir="${WEBSERVER_RESULTSDIR}/OUT/${REGION}/${runDate}/${START_DAY}"
+    # Get ssh key from environment
+    echo "${SSH_KEY}" > aufwinde_key
+    chmod 0600 aufwinde_key
+    # Create directory on webserver
+    ssh -i aufwinde_key -o StrictHostKeychecking=no "${WEBSERVER_USER}@${WEBSERVER_HOST}" "mkdir -p ${remoteLogDir}"
+    ssh -i aufwinde_key -o StrictHostKeychecking=no "${WEBSERVER_USER}@${WEBSERVER_HOST}" "mkdir -p ${remoteOutDir}"
+    # Always sync contents of log directory
+    echo "Sending logs to ${WEBSERVER_USER}@${WEBSERVER_HOST}:${remoteLogDir}"
+    rsync -e "ssh -i aufwinde_key -o StrictHostKeychecking=no" -rlt --delete-after "${logDir}/" "${WEBSERVER_USER}@${WEBSERVER_HOST}:${remoteLogDir}"
+    if [[ "$(ls -A ${outDir})" ]]
+    then
+        # If there is output, sync it. Otherwise, back off and be happy with the data that is already on the webserver
+        echo "Sending results to ${WEBSERVER_USER}@${WEBSERVER_HOST}:${remoteOutDir}"
+        rsync -e "ssh -i aufwinde_key -o StrictHostKeychecking=no" -rlt --delete-after "${outDir}/" "${WEBSERVER_USER}@${WEBSERVER_HOST}:${remoteOutDir}"
+        if [[ "${SEND_WRFOUT}" == "1" ]]
+        then
+            echo "Sending wrfout files to ${WEBSERVER_USER}@${WEBSERVER_HOST}:${remoteOutDir}"
+            rsync -e "ssh -i aufwinde_key -o StrictHostKeychecking=no" -rlt --exclude='*0[3-7]:00:00' "${regionDir}"/wrfout_d02_* "${WEBSERVER_USER}@${WEBSERVER_HOST}:${remoteOutDir}"
+        fi
+    fi
 fi
 
 if [[ "${REQUEST_DELETE}" == "1" ]]
 then
-  echo "Self-destruction of $HOSTNAME"
-  token=$(curl -s "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token" -H "Metadata-Flavor: Google" | perl -MJSON -0lnE '$json = decode_json $_; say $json->{access_token};')
-  curl -XDELETE -H "Authorization: Bearer ${token}" https://www.googleapis.com/compute/v1/projects/aufwinde/zones/europe-west3-c/instances/$HOSTNAME
+    $zone=$(printf ${WEBSERVER_HOST} | cut -d. -f2)
+    echo "Self-destruction of $HOSTNAME in $zone"
+    token=$(curl -s "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token" -H "Metadata-Flavor: Google" | perl -MJSON -0lnE '$json = decode_json $_; say $json->{access_token};')
+    curl -XDELETE -H "Authorization: Bearer ${token}" https://www.googleapis.com/compute/v1/projects/aufwinde/zones/$zone/instances/$HOSTNAME
 fi
