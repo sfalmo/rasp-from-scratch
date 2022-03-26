@@ -76,7 +76,7 @@ fi
 
 if [[ "${REQUEST_DELETE}" == "1" ]]
 then
-    $zone=$(printf ${WEBSERVER_HOST} | cut -d. -f2)
+    zone=$(printf ${WEBSERVER_HOST} | cut -d. -f2)
     echo "Self-destruction of $HOSTNAME in $zone"
     token=$(curl -s "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token" -H "Metadata-Flavor: Google" | perl -MJSON -0lnE '$json = decode_json $_; say $json->{access_token};')
     curl -XDELETE -H "Authorization: Bearer ${token}" https://www.googleapis.com/compute/v1/projects/aufwinde/zones/$zone/instances/$HOSTNAME

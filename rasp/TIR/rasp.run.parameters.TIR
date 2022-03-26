@@ -30,9 +30,6 @@ $LRUN_WINDOW{'TIR'} = 0 ;
 # ADD POSSIBLE SOUNDINGS (corresponding data must be set in file ../rasp-gm-TIR/GM/rasp.region_data.ncl)
 push @{$PARAMETER_DOLIST{'TIR'}}, ( 'sounding1','sounding2','sounding3','sounding4','sounding5','sounding6','sounding7','sounding8','sounding9' );
 
-$LOCALTIME_ID{'TIR'}  = substr `date +%Z`,0,3;
-$LOCALTIME_ADJ{'TIR'} = substr `date +%z`,0,3;
-
 # SET GRIB FILE PROCESSING
 # GRIBFILES_PER_FORECAST_PERIOD IS NUMBER OF GRIB FILES PROCESSED AT SAME TIME
 $GRIBFILES_PER_FORECAST_PERIOD{'TIR'} = 6 ;
@@ -58,6 +55,9 @@ if(defined $ENV{'START_DAY'}) {
 if(defined $ENV{'OFFSET_HOUR'}) {
     $offset = int($ENV{'OFFSET_HOUR'});
 }
+
+chomp($LOCALTIME_ID{'TIR'}  = `date -d "$day days" +%Z`);
+$LOCALTIME_ADJ{'TIR'} = substr `date -d "$day days" +%z`,0,3; # Only whole hours are taken. RASP cannot handle timezones such as +0530 at the moment
 
 $ISDST = ((localtime(time + $day*24*60*60))[8]); # Determine if the simulation date has DST
 if ($ISDST) {
