@@ -55,12 +55,8 @@ then
     # Get ssh key from environment
     echo "${SSH_KEY}" > aufwinde_key
     chmod 0600 aufwinde_key
-    # Create directory on webserver
-    ssh -i aufwinde_key -o StrictHostKeychecking=no "${WEBSERVER_USER}@${WEBSERVER_HOST}" "mkdir -p ${remoteLogDir}"
-    ssh -i aufwinde_key -o StrictHostKeychecking=no "${WEBSERVER_USER}@${WEBSERVER_HOST}" "mkdir -p ${remoteOutDir}"
-    # Always sync contents of log directory
-    echo "Sending logs to ${WEBSERVER_USER}@${WEBSERVER_HOST}:${remoteLogDir}"
-    rsync -e "ssh -i aufwinde_key -o StrictHostKeychecking=no" -rlt --delete-after "${logDir}/" "${WEBSERVER_USER}@${WEBSERVER_HOST}:${remoteLogDir}"
+    # Create directories on webserver
+    ssh -i aufwinde_key -o StrictHostKeychecking=no "${WEBSERVER_USER}@${WEBSERVER_HOST}" "mkdir -p ${remoteOutDir} ${remoteLogDir}"
     if [[ "$(ls -A ${outDir})" ]]
     then
         # If there is output, sync it. Otherwise, back off and be happy with the data that is already on the webserver
@@ -69,9 +65,13 @@ then
         if [[ "${SEND_WRFOUT}" == "1" ]]
         then
             echo "Sending wrfout files to ${WEBSERVER_USER}@${WEBSERVER_HOST}:${remoteOutDir}"
-            rsync -e "ssh -i aufwinde_key -o StrictHostKeychecking=no" -rlt --exclude='*0[3-7]:00:00' "${regionDir}"/wrfout_d02_* "${WEBSERVER_USER}@${WEBSERVER_HOST}:${remoteOutDir}"
+	    # wrfout files from the start of the simulation (early morning hours) are excluded, which is currently hardcoded. If you are in another timezone, adapt or remove the --exclude flag
+            rsync -e "ssh -i aufwinde_key -o StrictHostKeychecking=no" -rlt --exclude='*0[3-5]:00:00' "${regionDir}"/wrfout_d02_* "${WEBSERVER_USER}@${WEBSERVER_HOST}:${remoteOutDir}"
         fi
     fi
+    # Always sync contents of log directory. Do this afterwards because the copying of the results might take a while and the website is confused if the logs exist but the corresponding results do not
+    echo "Sending logs to ${WEBSERVER_USER}@${WEBSERVER_HOST}:${remoteLogDir}"
+    rsync -e "ssh -i aufwinde_key -o StrictHostKeychecking=no" -rlt --delete-after "${logDir}/" "${WEBSERVER_USER}@${WEBSERVER_HOST}:${remoteLogDir}"
 fi
 
 if [[ "${REQUEST_DELETE}" == "1" ]]
