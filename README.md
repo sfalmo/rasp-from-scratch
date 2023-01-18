@@ -1,14 +1,14 @@
 # RASP from scratch
 
 This repo provides Dockerfiles that help in the creation of a production-ready container image for running RASP forecasts.
-Contrary to most other available setups, WRF is built from scratch.
+Contrary to most other available setups, a current WRF version is built from scratch.
 
 ## Build
 
 The building process is somewhat complicated as we want to keep the final image size as small as possible.
 Therefore, the build happens in 3 separate stages that result in intermediate images.
 Everything is managed with `docker-compose`, because it lets you configure certain variables in a `.env` file.
-Copy or rename the provided template and adapt the documented variables to your needs.
+Copy or rename the provided `.env.template` and adapt the documented variables to your needs.
 
 ### Build base image
 
@@ -22,15 +22,16 @@ It is based on Fedora Linux and adds common utilities and libraries.
 ### Build WRF
 
 ```shell
-$ docker-compose build wrf
+$ docker-compose build wrf_build
+$ docker-compose build wrf_prod
 ```
 
 The version of WRF and WPS you have specified in `.env` are fetched from GitHub and compiled from source.
 This can take a long time, so be patient and do not worry about the verbose output!
-Note that the provided patches in `Registry.EM_COMMON.patch` might not work for arbitrary versions of WRF and WPS.
 
 WRF will be compiled with GNU compilers in smpar (i.e. OpenMP) mode (compilation option 33) and with basic nesting support (nesting option 1).
 
+The registry of WRF as well as some compile options are patched, this should be fairly robust but might break in future versions of WRF and WPS.
 We use the bare minimum of DrJack's patches to change WRF's registry, so that certain variables which are needed for the RASP plot routines appear in `wrfout` files.
 Note however, that DrJack's cloud calculation patches are not applied and thus, `wrf=CFRAC[L|M|H]` are not available (or wrong)!
 Use `cfrac[l|m|h]` instead, since those are implemented in the current version of NCL.
@@ -61,7 +62,13 @@ The region you have specified in `.env` is automatically initialized by running 
 
 Finally, in a second build stage, only the necessary artifacts are copied over from the first stage so that the final image remains at an optimal size.
 
-### Adapt to your own region
+#### Configure RASP output
+
+By default, RASP is configured in this repo to output only GeoTIFFs which can be used with my [RASP viewer](https://github.com/sfalmo/rasp-viewer).
+If you want to get the plots as normal images, look for `do_plots = False` in `rasp/GM/plot_funcs.ncl` and set this value to `True`.
+You can also disable the GeoTIFF generation in `rasp/bin/runRasp.sh` (remove the call to `rasp2geotiff.py`).
+
+#### Adapt to your own region
 
 You can easily adapt the setup to your own region by providing a region folder similar to `TIR` (which is the region I use) and setting the name of this folder in `.env`.
 Remember to also change some region specific aspects of the NCL scripts located in `rasp/GM`.

@@ -1,35 +1,40 @@
 services:
   base:
-    image: ${BASE_IMAGE}
+    image: ${BASE_IMAGE}:fedora${FEDORA_VERSION}
     build:
       context: ./base
       dockerfile: Dockerfile
+      args:
+        FEDORA_VERSION: ${FEDORA_VERSION}
   wrf_build:
-    image: ${WRF_IMAGE}:${WRF_VERSION}-${WRF_MARCH_BUILD}
+    image: ${WRF_IMAGE}:fedora${FEDORA_VERSION}_WRF${WRF_VERSION}-${WRF_MARCH_BUILD}
     build:
       context: ./wrf
       dockerfile: Dockerfile
       args:
+        FEDORA_VERSION: ${FEDORA_VERSION}
         BASE_IMAGE: ${BASE_IMAGE}
         WRF_VERSION: ${WRF_VERSION}
         WPS_VERSION: ${WPS_VERSION}
         WRF_MARCH: ${WRF_MARCH_BUILD}
   wrf_prod:
-    image: ${WRF_IMAGE}:${WRF_VERSION}-${WRF_MARCH_PROD}
+    image: ${WRF_IMAGE}:fedora${FEDORA_VERSION}_WRF${WRF_VERSION}-${WRF_MARCH_PROD}
     build:
       context: ./wrf
       dockerfile: Dockerfile
       args:
+        FEDORA_VERSION: ${FEDORA_VERSION}
         BASE_IMAGE: ${BASE_IMAGE}
         WRF_VERSION: ${WRF_VERSION}
         WPS_VERSION: ${WPS_VERSION}
         WRF_MARCH: ${WRF_MARCH_PROD}
   rasp:
-    image: ${RASP_IMAGE}:WRF${WRF_VERSION}-${WRF_MARCH_PROD}_${REGION}
+    image: ${RASP_IMAGE}:fedora${FEDORA_VERSION}_WRF${WRF_VERSION}-${WRF_MARCH_PROD}_${REGION}
     build:
       context: ./rasp
       dockerfile: Dockerfile
       args:
+        FEDORA_VERSION: ${FEDORA_VERSION}
         BASE_IMAGE: ${BASE_IMAGE}
         WRF_IMAGE: ${WRF_IMAGE}
         WRF_VERSION: ${WRF_VERSION}

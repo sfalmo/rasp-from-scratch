@@ -1,3 +1,4 @@
+ARG FEDORA_VERSION
 ARG BASE_IMAGE
 ARG WRF_IMAGE
 ARG WRF_VERSION
@@ -14,10 +15,10 @@ ARG REGION
 # Yes, you must build WRF before building WPS (it uses some i/o functions of the WRF library).
 # This leaves us with no choice but to build WRF twice - once for the build machine and once for the run server.
 # Note that this only applies if those two differ; if you build and run RASP on the same machine, only one native compile of WRF is needed.
-FROM ${WRF_IMAGE}:${WRF_VERSION}-${WRF_MARCH_BUILD} AS wrf_build
-FROM ${WRF_IMAGE}:${WRF_VERSION}-${WRF_MARCH_PROD} AS wrf_prod
+FROM ${WRF_IMAGE}:fedora${FEDORA_VERSION}_WRF${WRF_VERSION}-${WRF_MARCH_BUILD} AS wrf_build
+FROM ${WRF_IMAGE}:fedora${FEDORA_VERSION}_WRF${WRF_VERSION}-${WRF_MARCH_PROD} AS wrf_prod
 
-FROM ${BASE_IMAGE} AS raspbuild
+FROM ${BASE_IMAGE}:fedora${FEDORA_VERSION} AS raspbuild
 ARG REGION
 ENV TZ=Europe/Berlin \
   BASEDIR=/root/rasp
@@ -73,7 +74,7 @@ RUN cp ${REGION}/namelist.input ${REGION}/namelist.input.template \
   && mv $BASEDIR/${REGION}/rasp.region_data.ncl $BASEDIR/${REGION}/sitedata.ncl $BASEDIR/GM/
 
 # --- Actual RASP production image ---
-FROM ${BASE_IMAGE}
+FROM ${BASE_IMAGE}:fedora${FEDORA_VERSION}
 ARG REGION
 ENV REGION ${REGION}
 ARG WRF_VERSION
