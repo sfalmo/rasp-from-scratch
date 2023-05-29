@@ -97,7 +97,7 @@
  ifsnow                              = 1,
  icloud                              = 1,
  surface_input_source                = 1,
- num_land_cat                        = 21,
+ num_land_cat                        = 28,
  num_soil_layers                     = 4,
  /
 
