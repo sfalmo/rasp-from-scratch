@@ -68,7 +68,6 @@ COPY bin/ $BASEDIR/bin/
 COPY GM/ $BASEDIR/GM/
 COPY logo.svg $BASEDIR/
 COPY ncl_jack/ncl_jack_fortran.so $BASEDIR/GM/LIB/
-COPY ncl_jack/libncl_jack.nocuda.so ncl_jack/libwrf_user.nocuda.so $BASEDIR/lib/
 COPY ${REGION}/ $BASEDIR/${REGION}/
 RUN cp ${REGION}/namelist.input ${REGION}/namelist.input.template \
   && mv $BASEDIR/${REGION}/rasp.region_data.ncl $BASEDIR/${REGION}/sitedata.ncl $BASEDIR/GM/
@@ -76,11 +75,11 @@ RUN cp ${REGION}/namelist.input ${REGION}/namelist.input.template \
 # --- Actual RASP production image ---
 FROM ${BASE_IMAGE}:fedora${FEDORA_VERSION}
 ARG REGION
-ENV REGION ${REGION}
+ENV REGION=${REGION}
 ARG WRF_VERSION
-ENV WRF_VERSION ${WRF_VERSION}
+ENV WRF_VERSION=${WRF_VERSION}
 ARG WRF_MARCH_PROD
-ENV WRF_MARCH_PROD ${WRF_MARCH_PROD}
+ENV WRF_MARCH_PROD=${WRF_MARCH_PROD}
 COPY --from=raspbuild /root/rasp/ $BASEDIR
 ENV PATH="${BASEDIR}/bin:${PATH}"
 
@@ -92,7 +91,7 @@ RUN dnf update -y && dnf install -y \
   sendmail procmail mailx \
   ImageMagick \
   perl-CPAN perl-JSON \
-  python3 python3-gdal \
+  python3-gdal \
   openssh-clients rsync \
   && dnf clean all
 

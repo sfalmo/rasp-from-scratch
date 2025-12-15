@@ -1,1 +1,1 @@
-ncl_jack_fortran_nocuda.so
+libncl_drjack.avx2.nocuda.so

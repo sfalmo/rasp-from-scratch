@@ -2,14 +2,18 @@
 
 # first parameter must be the architecture name
 
+echo "Patching configure.wrf, -march=$1"
+
 OPTFLAGS="-O3 -ftree-vectorize -funroll-loops -ffast-math -flto=auto -march=$1"
 
 awk -v optflags="$OPTFLAGS" '{
 v += sub(/^FCOPTIM\s*=.*/, "FCOPTIM = " optflags);
-v += sub(/-L\$\(WRF_SRC_ROOT_DIR\)\/external\/io_netcdf/, "-L$(WRF_SRC_ROOT_DIR)/external/io_netcdf -lnetcdf -lnetcdff");
+v += sub(/-L\$\(WRF_SRC_ROOT_DIR\)\/external\/io_netcdf/, "-L$(WRF_SRC_ROOT_DIR)/external/io_netcdf -L/usr/lib64 -lnetcdff -lnetcdf");
 print
 }
 END{ if(v!=2) exit 1 }' configure.wrf > newconfigure.wrf
+
+sed -i 's/\/lib\//\/lib64\//g' external/io_netcdf/makefile
 
 if [ $? -eq 0 ]
 then
