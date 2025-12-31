@@ -51,7 +51,7 @@
  e_sn                                = 90,     206,
  e_vert                              = 52,     52,    30,
  p_top_requested                     = 5000,
- num_metgrid_soil_levels             = 4,
+ num_metgrid_soil_levels             = 7,
  dx                                  = 10000,  2000
  dy                                  = 10000,  2000
  grid_id                             = 1,      2,     3,
@@ -62,7 +62,7 @@
  parent_time_step_ratio              = 1,      5
  feedback                            = 1,
  smooth_option                       = 2,
- num_metgrid_levels                  = 50,
+ num_metgrid_levels                  = 75,
  eta_levels                          = 1.000, 0.998, 0.994, 0.987, 0.979,
                                        0.969, 0.958, 0.945, 0.933, 0.920,
                                        0.907, 0.895, 0.882, 0.870, 0.857,

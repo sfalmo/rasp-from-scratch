@@ -612,6 +612,7 @@ if( $GRIBFILE_MODEL eq 'GFS' ) { $GRIBFILE_MODEL = 'GFSN'; }
   $switchingtimehrz{'ETA'}= 1.7;
   $switchingtimehrz{'GFSN'}= 1.7;
   $switchingtimehrz{'GFSA'}= 1.7;
+  $switchingtimehrz{'ICON'}= 1.7;
   $switchingtimehrz{'AVN'}= 1.7;
   $switchingtimehrz{'RUCH'}= 1.7;
 ##_for_same_day_switchingtime: $switchingtimehrz = 23.7;
@@ -619,11 +620,13 @@ if( $GRIBFILE_MODEL eq 'GFS' ) { $GRIBFILE_MODEL = 'GFSN'; }
   $minftpmin{'ETA'}=20; 
   $minftpmin{'GFSN'}=20; 
   $minftpmin{'GFSA'}=20; 
+  $minftpmin{'ICON'}=20; 
   $minftpmin{'AVN'}=20; 
   $minftpmin{'RUCH'}=20; 
   $mincalcmin{'ETA'}=5; 
   $mincalcmin{'GFSN'}=5; 
   $mincalcmin{'GFSA'}=5; 
+  $mincalcmin{'ICON'}=5; 
   $mincalcmin{'AVN'}=5; 
   $mincalcmin{'RUCH'}=5; 
 ###### SET GRIB GET PARAMETERS
@@ -637,6 +640,7 @@ if( $GRIBFILE_MODEL eq 'GFS' ) { $GRIBFILE_MODEL = 'GFSN'; }
   $gribavailhrzoffset{RUCH} = -0.05; 
   $gribavailhrzoffset{GFSN} = -0.05; 
   $gribavailhrzoffset{GFSA} = +0.0; 
+  $gribavailhrzoffset{ICON} = +0.0; 
   $gribavailhrzoffset{AVN} = +0.6; 
 ### SET LS FTP TIMEOUT TIMES
 ### time for ls of grib file directory
@@ -706,6 +710,7 @@ if( $GRIBFILE_MODEL eq 'GFS' ) { $GRIBFILE_MODEL = 'GFSN'; }
 #      The correct value is now determined automatically - See below
   $num_metgrid_levels{'GFSN'} = 27 ;
   $num_metgrid_levels{'GFSA'} = 48 ;   # Assumes Additional Parameters are also downloaded
+  $num_metgrid_levels{'ICON'} = 74 ;
   $num_metgrid_levels{'AVN'}  = 40 ;
   $num_metgrid_levels{'ETA'}  = 40 ;
   $num_metgrid_levels{'RUCH'} = 40 ;
@@ -1123,6 +1128,10 @@ $PROXY = "";
       # $filetimes{$ifile} = sprintf 'gfs.t%02dz.pgrb2.0p25.f%03d',$fileanaltime,$ftime; # Use 0.25deg data for GFSA
       $filetimes{$ifile} = sprintf 'gfs.t%02dz.pgrb2.0p25.f%03d',$fileanaltime,$ftime; # Change to new data and filenames 12 Jun 2019
     }
+    elsif ( $GRIBFILE_MODEL eq 'ICON' ) { 
+      $filenamehead{$ifile} = '';
+      $filetimes{$ifile} = sprintf 'icon.t%02dz.f%03d.grib2',$fileanaltime,$ftime;
+    }
     elsif ( $gribftpsite1 eq 'https://nomads.ncep.noaa.gov' && $GRIBFILE_MODEL eq 'AVN' ) {
       $filenamehead{$ifile} = '';
       $filetimes{$ifile} = sprintf 'gfs.t%02dz.pgrbf%02d',$fileanaltime,$ftime;
@@ -1143,7 +1152,7 @@ $PROXY = "";
     ### average validtime to use as "current day" indicator
     $avgextendedvalidtime += $validtime ; 
     ### determine file day and adjust filevalidtime
-    if ( $GRIBFILE_MODEL eq 'ETA' || $GRIBFILE_MODEL eq 'RUCH' || $GRIBFILE_MODEL eq 'GFSN' || $GRIBFILE_MODEL eq 'GFSA' || $GRIBFILE_MODEL eq 'AVN' ) {
+    if ( $GRIBFILE_MODEL eq 'ETA' || $GRIBFILE_MODEL eq 'RUCH' || $GRIBFILE_MODEL eq 'GFSN' || $GRIBFILE_MODEL eq 'GFSA' || $GRIBFILE_MODEL eq 'ICON' || $GRIBFILE_MODEL eq 'AVN' ) {
       $filevaliddays{$ifile} = 'curr.';
     }
     else {
@@ -1255,7 +1264,7 @@ $PROXY = "";
   foreach $ifile (@filedolist) {
     ### add filename do list
     ### PARTIAL SPECIFICATION OF MODEL GRIB FILENAME HERE
-    if ( $GRIBFILE_MODEL eq 'ETA' || $GRIBFILE_MODEL eq 'GFSN' || $GRIBFILE_MODEL eq 'GFSA' || $GRIBFILE_MODEL eq 'AVN' ) {
+    if ( $GRIBFILE_MODEL eq 'ETA' || $GRIBFILE_MODEL eq 'GFSN' || $GRIBFILE_MODEL eq 'GFSA' || $GRIBFILE_MODEL eq 'ICON' || $GRIBFILE_MODEL eq 'AVN' ) {
       $filename = $filenamehead{$ifile} . $filetimes{$ifile} ;
       ### select directory based on init.time - 1=present vs 2=previous jdate
       if ( $ifile =~ /^ *\-/ ) {
@@ -1350,9 +1359,9 @@ $PROXY = "";
     if ( $LGETGRIB > 1 && $LMODELRUN > 0 ) {
       ### -i argument allows killing existing job, changing code, removing all old grib files, and restarting with appends to existing grib files
       if( $RUNTYPE ne '-i' ) {
-        # $rmout = `rm -v ${GRIBDIR}/*${filetimes{$ifile}} 2>&1`;
+        $rmout = `rm -v ${GRIBDIR}/*${filetimes{$ifile}} 2>&1`;
         # Since each REGION now has its own GRIB directory, can remaove all old files
-        $rmout = `rm -v ${GRIBDIR}/* 2>&1`;
+	#$rmout = `rm -v ${GRIBDIR}/* 2>&1`;
       }
       ### parallel-ftp gribftpget.pl does _not_ delete any grib files
       if ($LPRINT>2) { print $PRINTFH "${ifile}: pre-grib-download rm of previous grib file:\n$rmout\n"; }
@@ -1389,6 +1398,17 @@ $PROXY = "";
          $childprintoutfilename
         );
         $gribgetcommand = "ftp2u_subregion.pl";
+      }
+      elsif( $GRIBFILE_MODEL eq 'ICON' ) {
+        $args = join ',', (
+         $filename,
+         $ifile,
+         $GRIBFTPSTDOUT,
+         $GRIBFTPSTDERR,
+         $GRIBDIR,
+         $childprintoutfilename
+        );
+        $gribgetcommand = "download_icon.sh";
       }
       elsif( $GRIBFILE_MODEL eq 'AVN' && defined $GRIB_LEFT_LON && defined $GRIB_RIGHT_LON && defined $GRIB_TOP_LAT && defined $GRIB_BOTTOM_LAT ) {
         $args = join ',', (
@@ -1631,7 +1651,7 @@ $PROXY = "";
             `link_grib.csh GRIB/nam*`;
           }
           else {
-            `link_grib.csh GRIB/gfs*` ;
+            `link_grib.csh GRIB/*` ;
           }
           # No check on this is possible, so count GRIBFILES???
           $nGRIBFILES = `ls GRIBFILE.??? | wc -l` ;
@@ -3193,7 +3213,7 @@ sub setup_getgrib_parameters
     $gribavailhrz0{'12'} = &hhmm2hour( '13:40' );
     $gribavailhrz0{'18'} = &hhmm2hour( '19:14' );
   }
-  elsif ( $GRIBFILE_MODEL eq 'GFSN' || $GRIBFILE_MODEL eq 'GFSA' || $GRIBFILE_MODEL eq 'AVN' )
+  elsif ( $GRIBFILE_MODEL eq 'GFSN' || $GRIBFILE_MODEL eq 'GFSA' || $GRIBFILE_MODEL eq 'ICON' || $GRIBFILE_MODEL eq 'AVN' )
   {
     ###### SET MODEL-SPECIFIC GRIBGET PARAMETERS
     ### set max ftp time for grib get
@@ -3310,6 +3330,21 @@ sub setup_ftp_parameters ()
     $gribftpsite2 = '';
     $gribftpsiteid2 = '';
     $gribftpdirectory0 = "pub/data/nccf/com/gfs/prod";
+    $gribftpdirectory[1] = "";
+    $gribftpdirectory[2] = "";
+    $gribftpdirectory[3] = "";
+  }
+  elsif ( $GRIBFILE_MODEL eq 'ICON' )
+  {
+    ### $gribftpsite1,2 sets grib ftp site ($gribftpsite2=''=>no2ndSite)
+    ### if change gribftpsite(s) also need changes below and in gribftpget
+    ### *NB* FILENAMES MUST BE SAME AT ALTERNATE SITE $gribftpsite2
+    # $gribftpsite1 = 'ftpprd.ncep.noaa.gov';
+    $gribftpsite1 = 'https://opendata.dwd.de';
+    $gribftpsiteid1 = 'ICON';
+    $gribftpsite2 = '';
+    $gribftpsiteid2 = '';
+    $gribftpdirectory0 = "weather/nwp/icon-eu/grib";
     $gribftpdirectory[1] = "";
     $gribftpdirectory[2] = "";
     $gribftpdirectory[3] = "";
@@ -3560,6 +3595,12 @@ sub do_getgrib_selection ()
                $gribftpdirectory[1] = sprintf 'gfs.%04d%02d%02d/%02d',$jyr4,$jmo2,$jda2,$fileanaltimes{$ifile};
                $gribftpdirectory[0] = sprintf 'gfs.%04d%02d%02d/%02d',$jyr4m1,$jmo2m1,$jda2m1,$fileanaltimes{$ifile};
                $gribftpdirectory[2] = sprintf 'gfs.%04d%02d%02d/%02d',$jyr4p1,$jmo2p1,$jda2p1,$fileanaltimes{$ifile};
+             }
+             elsif ( $GRIBFILE_MODEL eq 'ICON' )
+             {
+               $gribftpdirectory[1] = "";
+               $gribftpdirectory[0] = "";
+               $gribftpdirectory[2] = "";
              }
              $filenamedirectory = $gribftpdirectory[$filenamedirectoryno{$ifile}];
              $filename{$ifile} = $file;
@@ -3834,6 +3875,10 @@ sub do_getgrib_selection ()
     }
    ### for NCEP filename
     elsif ( $gribftpsite eq 'https://nomads.ncep.noaa.gov' && $GRIBFILE_MODEL eq 'GFSA' && $filename =~ m|^gfs\.t([0-9][0-9])z\.pgrbf([0-9][0-9])$| )
+    {
+      $ifile = "${1}Z+${2}";
+    }
+    elsif ( $GRIBFILE_MODEL eq 'ICON' && $filename =~ m|^icon\.t([0-9][0-9])z\.f([0-9][0-9])$| )
     {
       $ifile = "${1}Z+${2}";
     }
@@ -4351,6 +4396,7 @@ sub latest_ls_file_info ()
         || ( $gribftpsite eq 'https://nomads.ncep.noaa.gov' && $GRIBFILE_MODEL eq 'ETA' && $filename =~ m/\.awip3dd/ ) 
         || ( $gribftpsite eq 'https://nomads.ncep.noaa.gov' && $GRIBFILE_MODEL eq 'GFSN' && $filename =~ m/\.pgrb2f/ ) 
         || ( $gribftpsite eq 'https://nomads.ncep.noaa.gov' && $GRIBFILE_MODEL eq 'GFSA' && $filename =~ m/\.pgrbf/ ) 
+        || ( $GRIBFILE_MODEL eq 'ICON' ) 
         || ( $gribftpsite eq 'https://nomads.ncep.noaa.gov' && $GRIBFILE_MODEL eq 'AVN' && $filename =~ m/\.pgrbf/ ) 
        ) )
       {
