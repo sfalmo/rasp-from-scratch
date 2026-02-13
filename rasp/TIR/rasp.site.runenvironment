@@ -2,7 +2,7 @@
 # Read by $BASEDIR/bin/runGM
 
 ulimit -s unlimited
-export OMP_STACKSIZE=500M # should be tuned according to the amount of memory you actually need
+export OMP_STACKSIZE=1G # should be tuned according to the amount of memory you actually need
 
 # Special Flag for PaulS "curr." even when REGIONXYZ+N
 export CURR_ONLY=1
