@@ -94,7 +94,7 @@ Remember to go through all `rasp.*` files within this directory to adapt region-
 You need the following data in your region folder:
  - `namelist.wps` for WPS which is used to set up the domain and pre-process meteorological data before every run.
  - `namelist.input` for WRF with all run-specific settings considering dynamics, physics, etc.
- - A symlink named `Vtable` to the variable table filename that is applicable to your GRIB files. For example, if you force your WRF run with GFS data (see the corresponding setting `$GRIBFILE_MODEL` in `rasp.run.parameters.*`), make a symlink via `ln -s Vtable.GFS Vtable`. The actual table file does not have to exist on your host machine if you want to use one of the stock Vtables of WPS, see [https://github.com/wrf-model/WPS/tree/master/ungrib/Variable_Tables][https://github.com/wrf-model/WPS/tree/master/ungrib/Variable_Tables] for the available options.
+ - A symlink named `Vtable` to the variable table filename that is applicable to your GRIB files. For example, if you force your WRF run with GFS data (see the corresponding setting `$GRIBFILE_MODEL` in `rasp.run.parameters.*`), make a symlink via `ln -s Vtable.GFS Vtable`. The actual table file does not have to exist on your host machine if you want to use one of the stock Vtables of WPS, see [https://github.com/wrf-model/WPS/tree/master/ungrib/Variable_Tables](https://github.com/wrf-model/WPS/tree/master/ungrib/Variable_Tables) for the available options.
 
 If you use bespoke geography data (e.g. SRTM topography or custom land use data), provide your custom `GEOGRID.TBL`; see `TIR/GEOGRID.TBL` for an example where SRTM topography and CORINE land use data is incorporated.
 Otherwise, the default `GEOGRID.TBL` from WPS will be used.
