@@ -26,6 +26,13 @@ foreach my $file (@files) {
 	    $fcstZulu = $6;
 	}
 
+        $str = `awk 'FNR==3' ${file}`;
+        if ($str =~ m/Model= (.*?) Region= (.*?) Grid= (.*?) Reskm= (.*?)/) {
+	    $initModel = $1;
+	    $region = $2;
+	    $resolution = $4;
+	}
+
         $str = `awk 'FNR==4' ${file}`;
         if ($str =~ m/\ADay= (\d*?) (\d*?) (\d*?) (.*?) ValidLST= (\d*?) (.*?) ValidZ= (.*?) Fcst= (.*?) Init= (.*?) Param= (.*?) Unit= (.*?) Mult= (.*?) Min= (.*?) Max= (.*?)$/) {
             $year = $1;
@@ -43,7 +50,7 @@ foreach my $file (@files) {
             $min = $13;
             $max = $14;
         }
-        my %array = (year => $year, month => $month, day => $day, weekday => $weekday, validLocal => $validLocal, timezone => $timezone, validZulu => $validZulu, fcstTime => $fcstTime, initTime => $initTime, fcstZulu => $fcstZulu, parameter => $parameter, unit => $unit, mult => $mult, min => $min, max => $max);
+        my %array = (region => $region, initModel => $initModel, resolution => $resolution, year => $year, month => $month, day => $day, weekday => $weekday, validLocal => $validLocal, timezone => $timezone, validZulu => $validZulu, fcstTime => $fcstTime, initTime => $initTime, fcstZulu => $fcstZulu, parameter => $parameter, unit => $unit, mult => $mult, min => $min, max => $max);
         open(FILE, '>', "${filenameBase}.title.json") or die $!;
         print FILE encode_json \%array;
         close(FILE);

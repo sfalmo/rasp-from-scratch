@@ -1,48 +1,41 @@
 import re
 import glob
 import numpy as np
+import json
 from osgeo import gdal, osr
 import sys
+from datetime import datetime
 
-def getLatLngBoundsFromWRF(wrfoutfile):
-    netcdf = 'NETCDF:"'+wrfoutfile+'":'
-    ds_lon_u = gdal.Open(netcdf+'XLONG_U')
-    ds_lat_u = gdal.Open(netcdf+'XLAT_U')
-    ds_lon_v = gdal.Open(netcdf+'XLONG_V')
-    ds_lat_v = gdal.Open(netcdf+'XLAT_V')
+def getBoundaryFromMetgrid(metgridfile):
+    netcdf = 'NETCDF:"'+metgridfile+'":'
+    ds_lon_c = gdal.Open(netcdf+'XLONG_C')
+    ds_lat_c = gdal.Open(netcdf+'XLAT_C')
 
-    lon_u = ds_lon_u.GetRasterBand(1).ReadAsArray()
-    lat_u = ds_lat_u.GetRasterBand(1).ReadAsArray()
-    lon_v = ds_lon_v.GetRasterBand(1).ReadAsArray()
-    lat_v = ds_lat_v.GetRasterBand(1).ReadAsArray()
+    lon_c = ds_lon_c.GetRasterBand(1).ReadAsArray()
+    lat_c = ds_lat_c.GetRasterBand(1).ReadAsArray()
 
-    ds_lon_u = None
-    ds_lat_u = None
-    ds_lon_v = None
-    ds_lat_v = None
+    ds_lon_c = None
+    ds_lat_c = None
 
-    lower_left_u = (lon_u[0,0], lat_u[0,0])
-    lower_right_u = (lon_u[0,-1], lat_u[0,-1])
-    lower_left_v = (lon_v[0,0], lat_v[0,0])
-    upper_left_v = (lon_v[-1,0], lat_v[-1,0])
-
-    return (lower_left_u, lower_right_u, lower_left_v, upper_left_v)
+    return [
+        *[(float(lat), float(lon)) for lat, lon in zip(lat_c[0,:], lon_c[0,:])],
+        *[(float(lat), float(lon)) for lat, lon in zip(lat_c[:,-1], lon_c[:,-1])],
+        *[(float(lat), float(lon)) for lat, lon in zip(lat_c[-1,::-1], lon_c[-1,::-1])],
+        *[(float(lat), float(lon)) for lat, lon in zip(lat_c[::-1,0], lon_c[::-1,0])]
+    ]
 
 def getWRFSpatialReference(trueLat1, trueLat2, refLng, centerLat):
     wrf_srs = osr.SpatialReference()
-    wrf_srs.ImportFromProj4("+proj=lcc +lat_1={trueLat1} +lat_2={trueLat2} +lon_0={refLng} +lat_0={centerLat} +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs".format(trueLat1=trueLat1, trueLat2=trueLat2, refLng=refLng, centerLat=centerLat))
+    wrf_srs.ImportFromProj4("+proj=lcc +lat_1={trueLat1} +lat_2={trueLat2} +lat_0={centerLat} +lon_0={refLng} +a=6370000 +b=6370000 +units=m +datum=WGS84 +no_defs=True".format(trueLat1=trueLat1, trueLat2=trueLat2, centerLat=centerLat, refLng=refLng))
     return wrf_srs
 
-def getGeoTransform(wrf_srs, bounds, dx, dy):
+def getGeoTransform(wrf_srs, upper_left, dx, dy):
     srs_out = osr.SpatialReference()
-    if hasattr(osr, 'OAMS_TRADITIONAL_GIS_ORDER'):
-        srs_out.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    srs_out.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     srs_out.SetGeogCS('', wrf_srs.GetAttrValue('datum'), '', wrf_srs.GetSemiMajor(), wrf_srs.GetInvFlattening())
     transform = osr.CoordinateTransformation(srs_out, wrf_srs)
-
-    ll_u, lr_u, ll_v, ul_v = [transform.TransformPoint(float(i[0]), float(i[1])) for i in bounds]
-    gt = (ll_u[0], dx, 0, -ll_v[1], 0, dy)
-    return gt
+    ul = transform.TransformPoint(upper_left[1], upper_left[0])
+    return (ul[0], dx, 0, -ul[1], 0, dy)
 
 def writeGeoTIFF(filename, data, wrf_srs, gt):
     driver = gdal.GetDriverByName("MEM")
@@ -51,7 +44,7 @@ def writeGeoTIFF(filename, data, wrf_srs, gt):
     griddata.SetProjection(wrf_srs.ExportToWkt())
     griddata.GetRasterBand(1).WriteArray(data)
     griddata.GetRasterBand(1).SetNoDataValue(-999999)
-    warp = gdal.Warp(filename, griddata, dstSRS='EPSG:3857', format='GTiff', resampleAlg='cubicspline', xRes=abs(gt[1]), yRes=abs(gt[-1]), creationOptions=['COMPRESS=DEFLATE', 'PREDICTOR=2'])
+    warp = gdal.Warp(filename, griddata, dstSRS='EPSG:3857', format='GTiff', resampleAlg='cubicspline', xRes=abs(gt[1]), yRes=abs(gt[-1]), creationOptions=['INTERLEAVE=BAND', 'COMPRESS=DEFLATE', 'PREDICTOR=2'])
     warp = None
 
 
@@ -60,12 +53,33 @@ if len(sys.argv) != 2:
     exit(1)
 
 path = sys.argv[1]
-bounds = getLatLngBoundsFromWRF(glob.glob(path+'/wrfout_d02_*')[0])
-datafiles = glob.glob(path+"/OUT/*.data")
 print(path)
-print(datafiles)
+
+boundary = getBoundaryFromMetgrid(glob.glob(path+'/met_em.d02.*')[0])
+print("boundary[0]:", boundary[0])
+
+parameters = set()
+hours = set()
+press_levels = set()
+
+datafiles = glob.glob(path+"/OUT/*.data")
 for datafile in datafiles:
-    print("Converting "+datafile+" to geoTIFF")
+    print("Converting "+datafile+" to GeoTIFF")
+    filename = datafile.split("/")[-1]
+
+    re_search = re.search(r'(.*?)\.curr\.(.*?)lst\.d.*\.data', filename)
+    if re_search:
+        parameter = re_search.group(1)
+        parameters.add(parameter)
+        hours.add(re_search.group(2))
+        press_search = re.search(r'press(\d+)', parameter)
+        if press_search:
+            press_levels.add(int(press_search.group(1)))
+
+    re_search = re.search(r'pfd_tot\.data', filename)
+    if re_search:
+        parameters.add('pfd_tot')
+
     with open(datafile, 'r') as d:
         d.readline()
         d.readline()
@@ -81,7 +95,10 @@ for datafile in datafiles:
         data = np.loadtxt(data_raw, dtype=int)
     except:
         data = np.around(np.loadtxt(data_raw)).astype(int)
+
     wrf_srs = getWRFSpatialReference(trueLat1, trueLat2, refLng, centerLat)
-    gt = getGeoTransform(wrf_srs, bounds, dx, dy)
+    gt = getGeoTransform(wrf_srs, boundary[0], dx, dy)
     writeGeoTIFF(datafile+'.tiff', data, wrf_srs, gt)
 
+with open(path+"/OUT/parameters.json", "w") as f:
+    json.dump({'timestamp': datetime.now().isoformat(), 'parameters': list(parameters), 'hours': sorted(list(hours)), 'press_levels': sorted(list(press_levels), reverse=True), 'boundary': boundary, 'center': [centerLat, centerLng], 'dx': dx, 'dy': dy}, f)

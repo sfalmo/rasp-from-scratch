@@ -1141,6 +1141,8 @@ end
 procedure write_datafile(param, bparam, opts_bparam, ldatafmt)
 begin
 	qdatimeinfo = getenv("ENV_NCL_DATIME")
+	initmodel = getenv("ENV_NCL_INITMODE")
+
 	if(ismissing(qdatimeinfo)) then
 		return	; Skip writing datafile
 	end if
@@ -1152,7 +1154,7 @@ begin
 		       opts_bparam@MainTitle + " [" + unit + "] " +      \
 		       getenv("ENV_NCL_ID"), "~I~", "" ) , "~P~", "" )
 
-	qgridinfo = "Model= RASP Region= " + Region                                                   \
+	qgridinfo = "Model= " + initmodel + " Region= " + Region                                                   \
 		    + " Grid= " + domainid + " Reskm= "  + bparam@gridspacingkm                       \
 		    + " Indexs=" + " 1 "  + sprinti("%i", bparam@nx) + " 1 "+sprinti("%i", bparam@ny) \
 		    + " Proj= lambert" + sprintf(" %.0f", bparam@dx) + sprintf(" %.0f", bparam@dy)    \
@@ -1164,7 +1166,7 @@ begin
 	; Note that this includes pressNNN and windNNN
 	if( isatt(bparam, "udata") .and. isatt(bparam, "vdata")) then
 		qdatatitle = opts_bparam@MainTitle + " Direction [deg] " + getenv("ENV_NCL_ID")
-                qparaminfo = "Param= " + param + " Direction Unit= " + unit + " Mult= 1"
+                qparaminfo = "Param= " + param + "Direction Unit= deg Mult= 1"
 
 		if(bparam@plot_param_chars(0:4) .eq. "press") then
 			qdatafile = OutDir + param + "wdir" + bparam@tail + ".data"
@@ -1193,7 +1195,7 @@ begin
 		press_wspd = sqrt(bparam@udata * bparam@udata + bparam@vdata * bparam@vdata)
 		if(UNITS .ne. "metric") then
 			qdatatitle = opts_bparam@MainTitle + " Speed [kt] " + getenv("ENV_NCL_ID")
-			qparaminfo = "Param= " + param + " Speed Unit= kt Mult= 1"
+			qparaminfo = "Param= " + param + "Speed Unit= kt Mult= 1"
 			press_wspd = press_wspd * 1.9438445
 		else
 			qdatatitle = opts_bparam@MainTitle + " Speed [m/sec] " + getenv("ENV_NCL_ID")
@@ -1212,6 +1214,24 @@ begin
 		if(bparam@plot_param_chars(0:4) .ne. "press") then
 			;print(" ")	; CR!
 			return
+		end if
+	end if
+
+	if( isatt(bparam, "cldfradata") ) then
+		qdatatitle = opts_bparam@MainTitle + " Cloud Fraction [%] " + getenv("ENV_NCL_ID")
+                qparaminfo = "Param= " + param + "CloudFraction Unit= % Mult= 1"
+		qdatafile = OutDir + param + "cldfra" + bparam@tail +".data"
+
+		cldfra_plane = bparam@cldfradata
+		output_mapdatafile( qdatafile,          \
+				qdatatitle,             \
+				qgridinfo,              \
+				qdatimeinfo+qparaminfo, \
+				cldfra_plane,           \
+				bparam@nx, bparam@ny,   \
+				ldatafmt )
+		if(isvar("cldfra_plane")) then
+			delete(cldfra_plane)
 		end if
 	end if
 
@@ -1544,13 +1564,12 @@ begin
 			acctime = stringtointeger( chartostring( plot_param_chars(4:) ) )
 			opts_bparam@ContourParameters = (/0.2, 4.8, 0.2/)
 			opts_bparam@MainTitle = sprinti("%d", acctime) + "Hr Accumulated Rain"
-			opts_bparam@unitString = "mm"
+			opts_bparam@unitString = "ml/m~S~2~N~"
 			if(isvar("acctime")) then
 				delete(acctime)
 			end if
 
-			ldatafmt = 2
-			rain_mag = rain(filename, f, plot_param_chars, nx, ny)
+			rain_mag = rain(filename, f, plot_param_chars, nx, ny) * 1000
 			ldatafmt = plot_contour(wks, bg, rain_mag, params(p), tail, alat, alon, gridspacingkm, opts_cn, opts_bparam, opts_bg, ldatafmt)
 			bparam = rain_mag
 			copy_VarAtts(atts, bparam)
@@ -1827,7 +1846,7 @@ begin
 			opts_bparam@MainTitle = "Cloud Condensation Equiv Heat"
 			opts_bparam@unitString= " "
 			ldatafmt = plot_contour(wks, bg, cloudsuck_mag, params(p), tail, alat, alon, gridspacingkm, opts_cn, opts_bparam, opts_bg, ldatafmt)
-			bparam = sfcshf_mag
+			bparam = cloudsuck_mag
 			copy_VarAtts(atts, bparam)
 			write_datafile(params(p), bparam, opts_bparam, ldatafmt)
 
@@ -2714,10 +2733,12 @@ begin
 			v@lat2d = alat
 			v@lon2d = alon
 			pressure = press(ter, params(p), mag, u, v, wa, uEW, vNS, pmb )
+			cldfra_plane  = wrf_user_intrp3d(cldfra, pmb, "h", pressure, 0., False) * 100
 			ldatafmt = plot_barb(wks, bg, mag, u, v, z, pressure, params(p), tail, alat, alon, gridspacingkm, opts_cn, opts_bparam, opts_bg, ldatafmt)
 			bparam = mag
 			bparam@udata = u
 			bparam@vdata = v
+			bparam@cldfradata = cldfra_plane
 			copy_VarAtts(atts, bparam)
 			bparam@_FillValue = -999999
 

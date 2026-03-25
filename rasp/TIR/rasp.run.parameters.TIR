@@ -13,7 +13,7 @@
 #$GRIBFILE_MODEL  = 'ICON' ;
 
 $GRIBFILE_MODEL  = 'GFSA' ;
-$GRIB_LEFT_LON   =  5 ;
+$GRIB_LEFT_LON   =  0 ;
 $GRIB_RIGHT_LON  =  20 ;
 $GRIB_BOTTOM_LAT =  45 ;
 $GRIB_TOP_LAT    =  55 ;
@@ -28,10 +28,10 @@ $LSAVE = 0 ;
 $LRUN_WINDOW{'TIR'} = 0 ;
 
 # SET BASIC PARAMETER LIST
-@{$PARAMETER_DOLIST{'TIR'}} = ( 'wstar','bsratio','wstar_bsratio','hglider','dglider','hwcrit','dwcrit','hbl','dbl','bltopvariab','wblmaxmin','zwblmaxmin','sfcsunpct','sfcshf','sfctemp','sfcdewpt','sfcwind0','blwind','bltopwind','blwindshear','zsfclcldif','zsfclcl','zsfclclmask','zblcldif','zblcl','zblclmask','blicw','blcwbase','blcloudpct','cfracl','cfracm','cfrach','rain1','cape','press950','press850','press700','press500','pfd_tot' );
+@{$PARAMETER_DOLIST{'TIR'}} = ( 'wstar','bsratio','wstar_bsratio','hglider','dglider','hwcrit','dwcrit','hbl','dbl','bltopvariab','wblmaxmin','zwblmaxmin','cloudsuck','sfcsunpct','sfcshf','sfctemp','sfcdewpt','mslpress','sfcwind0','sfcwind','sfcwind2','blwind','bltopwind','blwindshear','zsfclcldif','zsfclcl','zsfclclmask','zblcldif','zblcl','zblclmask','blicw','blcwbase','blcloudpct','cfracl','cfracm','cfrach','rain1','cape','press950','press900','press850','press800','press750','press700','press650','press600','press550','press500','pfd_tot' );
 
 # ADD POSSIBLE SOUNDINGS (corresponding data must be set in file ../rasp-gm-TIR/GM/rasp.region_data.ncl)
-push @{$PARAMETER_DOLIST{'TIR'}}, ( 'sounding1','sounding2','sounding3','sounding4','sounding5','sounding6','sounding7','sounding8','sounding9' );
+push @{$PARAMETER_DOLIST{'TIR'}}, ( );
 
 # SET GRIB FILE PROCESSING
 # GRIBFILES_PER_FORECAST_PERIOD IS NUMBER OF GRIB FILES PROCESSED AT SAME TIME

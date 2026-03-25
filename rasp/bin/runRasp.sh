@@ -50,10 +50,12 @@ perl /root/rasp/bin/title2json.pl /root/rasp/${REGION}/OUT &> ${logDir}/title2js
 # Generate geotiffs from data files
 python3 /root/rasp/bin/rasp2geotiff.py /root/rasp/${REGION} &> ${logDir}/rasp2geotiff.out
 
-# Move some additional log files
+# Move or copy some additional files
 mv ${regionDir}/wrf.out ${logDir}
 mv ${regionDir}/metgrid.log ${logDir}
 mv ${regionDir}/ungrib.log ${logDir}
+cp ${regionDir}/namelist.wps ${logDir}
+cp ${regionDir}/namelist.input ${logDir}
 
 echo "Started running rasp at ${runDate}_${runTime}, ended at $(date +%Y-%m-%d_%H-%M)"
 
@@ -74,7 +76,12 @@ then
         if [[ "${SEND_WRFOUT}" == "1" ]]
         then
             echo "Sending wrfout files to ${WEBSERVER_USER}@${WEBSERVER_HOST}:${remoteOutDir}"
-	    # wrfout files from the start of the simulation (early morning hours) are excluded, which is currently hardcoded. If you are in another timezone, adapt or remove the --exclude flag
+            echo "Stripping wrfout files variables"
+            for wrfout in "${regionDir}"/wrfout_d02_*
+            do
+                ncks -v XLAT,XLONG,HGT,P,PH,PB,PHB,T,U,V,W,CLDFRA,QCLOUD,QVAPOR,EDMF_W -O "$wrfout" "$wrfout"
+            done
+            # wrfout files from the start of the simulation (early morning hours) are excluded, which is currently hardcoded. If you are in another timezone, adapt or remove the --exclude flag
             rsync -e "ssh -i aufwinde_key -o StrictHostKeychecking=no" -rlt --exclude='*0[3-5]:00:00' "${regionDir}"/wrfout_d02_* "${WEBSERVER_USER}@${WEBSERVER_HOST}:${remoteOutDir}"
         fi
     fi
@@ -85,8 +92,11 @@ fi
 
 if [[ "${REQUEST_DELETE}" == "1" ]]
 then
-    zone=$(printf ${WEBSERVER_HOST} | cut -d. -f2)
-    echo "Self-destruction of $HOSTNAME in $zone"
+    fqdn=$(curl -s "http://metadata.google.internal/computeMetadata/v1/instance/hostname" -H "Metadata-Flavor: Google")
+    hostname=$(printf ${fqdn} | cut -d. -f1)
+    zone=$(printf ${fqdn} | cut -d. -f2)
+    project=$(printf ${fqdn} | cut -d. -f4)
+    echo "Self-destruction of $hostname in zone $zone in project $project"
     token=$(curl -s "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token" -H "Metadata-Flavor: Google" | perl -MJSON -0lnE '$json = decode_json $_; say $json->{access_token};')
-    curl -XDELETE -H "Authorization: Bearer ${token}" https://www.googleapis.com/compute/v1/projects/aufwinde/zones/$zone/instances/$HOSTNAME
+    curl -XDELETE -H "Authorization: Bearer ${token}" https://www.googleapis.com/compute/v1/projects/$project/zones/$zone/instances/$hostname
 fi

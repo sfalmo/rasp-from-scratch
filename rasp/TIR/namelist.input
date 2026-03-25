@@ -47,8 +47,8 @@
  time_step_fract_num                 = 0
  time_step_fract_den                 = 1
  max_dom                             = 2
- e_we                                = 90,     206
- e_sn                                = 90,     206
+ e_we                                = 104,    276
+ e_sn                                = 104,    276
  e_vert                              = 52,     52
  p_top_requested                     = 5000
  eta_levels                          = 1.0000, 0.9975, 0.9935, 0.9872, 0.9790,
