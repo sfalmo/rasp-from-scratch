@@ -39,7 +39,7 @@ def getGeoTransform(wrf_srs, upper_left, dx, dy):
 
 def writeGeoTIFF(filename, data, wrf_srs, gt):
     driver = gdal.GetDriverByName("MEM")
-    griddata = driver.Create("temp", data.shape[0], data.shape[1], 1, gdal.GDT_Int32)
+    griddata = driver.Create("temp", data.shape[1], data.shape[0], 1, gdal.GDT_Int32)
     griddata.SetGeoTransform(gt)
     griddata.SetProjection(wrf_srs.ExportToWkt())
     griddata.GetRasterBand(1).WriteArray(data)
