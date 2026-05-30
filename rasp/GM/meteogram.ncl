@@ -1421,7 +1421,7 @@ end if
    rain1= new(numtimes,float)
    if (show_rain.ne.0) then
       
-      rain1 = rain1_multitime(:,locY,locX)
+      rain1 = rain1_multitime(:,locY,locX) * 0.001
       if ( (.not.ismissing(max(rain1))) .and. (.not.(max(rain1).gt.0)) ) then
          show_this_rain=0
          print("No rain in the forecast for "+sites(ns)+".")
