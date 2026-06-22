@@ -14,7 +14,7 @@ STDOUTFILE="${GRIBFTPSTDOUT}.${ifile}"
 STDERRFILE="${GRIBFTPSTDERR}.${ifile}"
 
 process() {
-	(curl --retry 10 --fail-with-body -sS --write-out "%output{>>${STDOUTFILE}}%{url}\n%{http_code}, %{size_download} bytes in %{time_total} seconds (%{speed_download} bytes per second).\n" "$1" | bzcat >> "${outdir}/${targetfile}") 2>> ${STDERRFILE}
+	(curl --retry 10 --fail-with-body -sS --write-out "%output{>>${STDOUTFILE}}%{url}\n%{http_code}, %{size_download} bytes in %{time_total} seconds (%{speed_download} bytes per second).\n" "$1" | bzcat >> "${outdir}/${targetfile}.ccsds") 2>> ${STDERRFILE}
 }
 
 logprintout() {
@@ -93,3 +93,6 @@ for VARIABLE in "W_SO"; do
 		process https://opendata.dwd.de/weather/nwp/icon-eu/grib/${INIT_HOUR}/${variable}/icon-eu_europe_regular-lat-lon_soil-level_${RUN_DATE}${INIT_HOUR}_${FCST_HOUR}_${LEVEL}_${VARIABLE}.grib2.bz2
 	done
 done
+
+grib_set -r -s packingType=grid_simple "${outdir}/${targetfile}.ccsds" "${outdir}/${targetfile}"
+rm "${outdir}/${targetfile}.ccsds"

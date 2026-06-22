@@ -87,6 +87,7 @@ ENV PATH="${BASEDIR}/bin:${PATH}"
 RUN dnf update -y && dnf install -y \
   libomp \
   nco ncl \
+  eccodes \
   psmisc procps-ng pigz \
   sendmail procmail mailx \
   ImageMagick \
